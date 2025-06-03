@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'screens/collection_screen.dart';
 import 'screens/cards_screen.dart';
 import 'screens/boosters_screen.dart';
+import 'screens/ocr_scan_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -32,8 +33,6 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
-  static const TextStyle optionStyle =
-      TextStyle(fontSize: 30, fontWeight: FontWeight.bold);
   static final List<Widget> _widgetOptions = <Widget>[
     const CollectionScreen(),
     const CardsScreen(),
@@ -45,6 +44,16 @@ class _HomeScreenState extends State<HomeScreen> {
       _selectedIndex = index;
     });
   }
+
+  void _navigateToOcrScreen() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const OcrScanScreen()),
+    );
+    // If using named routes:
+    // Navigator.pushNamed(context, '/ocr');
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -71,9 +80,25 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
         currentIndex: _selectedIndex,
-        selectedItemColor: Colors.blue,
+        selectedItemColor: Colors.blueAccent, 
+        unselectedItemColor: Colors.grey, 
         onTap: _onItemTapped,
       ),
+            // --- FloatingActionButton for OCR ---
+      floatingActionButton: FloatingActionButton(
+        onPressed: _navigateToOcrScreen,
+        tooltip: 'Scan Card',
+        child: const Icon(Icons.camera_alt),
+        // backgroundColor: Colors.blueAccent, // Optional: customize color
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked, // Optional: if you want it docked
+      // If using centerDocked, you might want to adjust the BottomAppBar shape
+      // For example, if you also had a BottomAppBar:
+      // bottomNavigationBar: BottomAppBar(
+      //   shape: const CircularNotchedRectangle(),
+      //   notchMargin: 6.0,
+      //   child: BottomNavigationBar(...), // Your existing BottomNavigationBar
+      // ),
     );
   }
 }
