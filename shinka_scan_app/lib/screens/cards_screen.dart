@@ -1,18 +1,39 @@
 import 'package:flutter/material.dart';
-import '../test_data.dart';
+import '../data/card_repository.dart';
 import '../models/TCGCard.dart';
 
-class CardsScreen extends StatelessWidget {
+class CardsScreen extends StatefulWidget {
   const CardsScreen({super.key});
 
   @override
+  State<CardsScreen> createState() => _CardsScreenState();
+}
+
+class _CardsScreenState extends State<CardsScreen> {
+  late final Future<List<TCGCard>> _cardsFuture = cardRepository.getAllCards();
+
+  @override
   Widget build(BuildContext context) {
-    List<TCGCard> cards = TestData.sampleCards; // Use test data as fallback
-    return ListView.builder(
-      itemCount: cards.length,
-      itemBuilder: (context, index) {
-        final card = cards[index];
-        return CardListItem(card: card);
+    return FutureBuilder<List<TCGCard>>(
+      future: _cardsFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState != ConnectionState.done) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (snapshot.hasError) {
+          return Center(child: Text('Failed to load cards: ${snapshot.error}'));
+        }
+        final cards = snapshot.data ?? const [];
+        if (cards.isEmpty) {
+          return const Center(child: Text('No cards found.'));
+        }
+        return ListView.builder(
+          itemCount: cards.length,
+          itemBuilder: (context, index) {
+            final card = cards[index];
+            return CardListItem(card: card);
+          },
+        );
       },
     );
   }

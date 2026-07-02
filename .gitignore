@@ -55,3 +55,6 @@ shadowverse-client-unity-main/
 source_image/
 shinka_scan_app/pubspec.lock
 shinka_scan_app/linux/flutter/generated_plugin_registrant.cc
+
+# Claude Code tooling config
+.claude/
