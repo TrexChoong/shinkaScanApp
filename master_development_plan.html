@@ -140,6 +140,30 @@
   #tip .t-title { font-weight: 650; }
   #tip .t-meta { opacity: 0.75; font-variant-numeric: tabular-nums; }
 
+  /* ---------- drift reminder toast ---------- */
+  .drift-toast {
+    position: fixed; z-index: 20; right: 20px; bottom: 20px;
+    max-width: 400px; width: calc(100% - 40px);
+    background: var(--surface); color: var(--ink-2);
+    border: 1px solid var(--ring); border-left: 3px solid var(--accent);
+    border-radius: 10px; padding: 14px 16px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.22);
+    font-size: 13px; line-height: 1.5; display: none;
+  }
+  .drift-toast.show { display: block; }
+  @media (prefers-reduced-motion: no-preference) {
+    .drift-toast.show { animation: drift-in 0.2s ease-out; }
+  }
+  @keyframes drift-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  .drift-toast .dt-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 6px; }
+  .drift-toast .dt-title { font-size: 11.5px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink); }
+  .drift-toast .dt-close { background: none; border: none; color: var(--muted); font-size: 19px; line-height: 1; cursor: pointer; padding: 0 2px; }
+  .drift-toast .dt-close:hover, .drift-toast .dt-close:focus-visible { color: var(--ink); }
+  .drift-toast b { color: var(--ink); font-weight: 640; }
+  .drift-toast ol { margin: 6px 0 0; padding-left: 18px; }
+  .drift-toast li { margin: 4px 0; }
+  .drift-toast a { color: var(--accent); font-weight: 600; }
+
   /* ---------- task picker widget ---------- */
   .picker-grid { display: grid; grid-template-columns: minmax(320px, 5fr) minmax(300px, 4fr); gap: 20px; align-items: start; }
   @media (max-width: 860px) { .picker-grid { grid-template-columns: 1fr; } }
@@ -283,7 +307,7 @@
     </div>
   </div>
   <div class="card" style="margin-top:20px">
-    <p class="panel-title">All issues <span class="hint">checks are saved in this browser only — they don't close GitHub issues</span></p>
+    <p class="panel-title">All issues <span class="hint">local preview only — each toggle shows how to sync it to GitHub</span></p>
     <div class="checklist" id="checklist"></div>
   </div>
 
@@ -404,6 +428,7 @@
 </div>
 
 <div id="tip"></div>
+<div id="drift" class="drift-toast" role="status" aria-live="polite"></div>
 
 <script>
 (function () {
@@ -610,15 +635,57 @@
   function renderAll() { renderGantt(); renderUpNext(); renderMeters(); renderChecklist(); }
   renderAll();
 
+  // ---------- drift reminder: keep GitHub as the source of truth ----------
+  // Ticking a box here only changes this local preview. This page reads a
+  // SNAPSHOT (the ITEMS array), so every local change is a chance to drift from
+  // the live board — so on every toggle, say exactly what to do about it.
+  const REPO_URL = "https://github.com/TrexChoong/shinkaScanApp";
+  const driftEl = document.getElementById("drift");
+  let driftTimer = null;
+  function hideDrift() {
+    driftEl.classList.remove("show");
+    if (driftTimer) { clearTimeout(driftTimer); driftTimer = null; }
+  }
+  function showDrift(html) {
+    driftEl.innerHTML =
+      `<div class="dt-head"><span class="dt-title">Preview only — sync to GitHub</span>` +
+      `<button class="dt-close" type="button" aria-label="Dismiss">&times;</button></div>` + html;
+    driftEl.classList.add("show");
+    driftEl.querySelector(".dt-close").addEventListener("click", hideDrift);
+    if (driftTimer) clearTimeout(driftTimer);
+    driftTimer = setTimeout(hideDrift, 14000);
+  }
+  function driftForToggle(n, checked) {
+    const title = (byN[n] && byN[n][1]) || "";
+    const url = `${REPO_URL}/issues/${n}`;
+    if (checked) {
+      showDrift(
+        `You checked <b>#${n} ${title}</b> here — this lives in your browser and does <b>not</b> close the issue. To make it real:` +
+        `<ol><li><a href="${url}" target="_blank" rel="noopener">Close #${n} on GitHub</a> — the board automation then flips its dependents to Ready.</li>` +
+        `<li>Changed scope — new issue, dependency, estimate, or date? Update this file's <b>ITEMS</b> list too, or this widget drifts from the board.</li></ol>`
+      );
+    } else {
+      showDrift(
+        `You unchecked <b>#${n} ${title}</b> here. If it's closed on GitHub, ` +
+        `<a href="${url}" target="_blank" rel="noopener">reopen #${n}</a> so the board and this preview agree.`
+      );
+    }
+  }
+
   document.addEventListener("change", ev => {
     const n = ev.target && ev.target.dataset ? Number(ev.target.dataset.n) : NaN;
     if (!n) return;
     if (ev.target.checked) done.add(n); else done.delete(n);
     save();
     renderAll();
+    driftForToggle(n, ev.target.checked);
   });
   document.getElementById("reset").addEventListener("click", () => {
     done = new Set(); save(); renderAll();
+    showDrift(
+      `Cleared all local checks. This only resets the preview — it changes nothing on GitHub. ` +
+      `The live board reflects whatever issues are actually open or closed there.`
+    );
   });
 
   // ---------- tooltip ----------
