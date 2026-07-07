@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ShinkaScan — Master Development Plan</title>
+<style>
+  :root {
+    --page: #f9f9f7;
+    --surface: #fcfcfb;
+    --ink: #0b0b0b;
+    --ink-2: #52514e;
+    --muted: #898781;
+    --hairline: #e1e0d9;
+    --baseline: #c3c2b7;
+    --ring: rgba(11,11,11,0.10);
+    --m0: #2a78d6;
+    --m1: #1baf7a;
+    --m2: #eda100;
+    --m3: #008300;
+    --accent: #2a78d6;
+    --today: #d03b3b;
+    --tip-bg: #0b0b0b;
+    --tip-ink: #ffffff;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --page: #0d0d0d; --surface: #1a1a19; --ink: #ffffff; --ink-2: #c3c2b7;
+      --muted: #898781; --hairline: #2c2c2a; --baseline: #383835;
+      --ring: rgba(255,255,255,0.10);
+      --m0: #3987e5; --m1: #199e70; --m2: #c98500; --m3: #008300;
+      --accent: #3987e5; --today: #e66767; --tip-bg: #fcfcfb; --tip-ink: #0b0b0b;
+    }
+  }
+  :root[data-theme="dark"] {
+    --page: #0d0d0d; --surface: #1a1a19; --ink: #ffffff; --ink-2: #c3c2b7;
+    --muted: #898781; --hairline: #2c2c2a; --baseline: #383835;
+    --ring: rgba(255,255,255,0.10);
+    --m0: #3987e5; --m1: #199e70; --m2: #c98500; --m3: #008300;
+    --accent: #3987e5; --today: #e66767; --tip-bg: #fcfcfb; --tip-ink: #0b0b0b;
+  }
+  :root[data-theme="light"] {
+    --page: #f9f9f7; --surface: #fcfcfb; --ink: #0b0b0b; --ink-2: #52514e;
+    --muted: #898781; --hairline: #e1e0d9; --baseline: #c3c2b7;
+    --ring: rgba(11,11,11,0.10);
+    --m0: #2a78d6; --m1: #1baf7a; --m2: #eda100; --m3: #008300;
+    --accent: #2a78d6; --today: #d03b3b; --tip-bg: #0b0b0b; --tip-ink: #ffffff;
+  }
+
+  body {
+    background: var(--page);
+    color: var(--ink);
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    line-height: 1.55;
+    margin: 0;
+  }
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 48px 24px 96px; }
+
+  .eyebrow {
+    font-size: 12px; font-weight: 650; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--muted); margin: 0 0 10px;
+  }
+  h1 {
+    font-size: clamp(28px, 4vw, 40px); font-weight: 700; letter-spacing: -0.02em;
+    margin: 0 0 12px; text-wrap: balance;
+  }
+  .lede { max-width: 68ch; color: var(--ink-2); font-size: 16.5px; margin: 0 0 8px; }
+  .lede strong { color: var(--ink); }
+  .meta-row {
+    display: flex; flex-wrap: wrap; gap: 8px 20px; margin: 20px 0 0;
+    font-size: 13.5px; color: var(--muted);
+  }
+  .meta-row a { color: inherit; }
+
+  h2 {
+    font-size: 20px; font-weight: 680; letter-spacing: -0.01em;
+    margin: 56px 0 6px; text-wrap: balance;
+  }
+  .sub { color: var(--ink-2); font-size: 14.5px; margin: 0 0 18px; max-width: 75ch; }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--ring);
+    border-radius: 10px;
+    padding: 20px;
+  }
+
+  /* ---------- legend ---------- */
+  .legend { display: flex; flex-wrap: wrap; gap: 8px 22px; margin: 16px 0 14px; font-size: 13.5px; }
+  .legend .item { display: flex; align-items: center; gap: 8px; color: var(--ink-2); }
+  .chip { width: 12px; height: 12px; border-radius: 3px; flex: none; }
+  .chip.spikey { background: transparent !important; border: 2px solid var(--muted); box-sizing: border-box; }
+  .legend .due { color: var(--muted); }
+
+  /* ---------- gantt ---------- */
+  .gantt-scroll { overflow-x: auto; }
+  .gantt { min-width: 920px; position: relative; }
+  .g-axis, .g-row, .g-mshead { display: grid; grid-template-columns: 250px 1fr; align-items: center; }
+  .g-axis { height: 26px; font-size: 11.5px; color: var(--muted); }
+  .g-axis .plot { position: relative; height: 100%; }
+  .g-axis .tick { position: absolute; top: 4px; transform: translateX(4px); letter-spacing: 0.06em; text-transform: uppercase; font-weight: 600; }
+  .g-mshead { margin-top: 14px; }
+  .g-mshead .lbl { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; }
+  .g-mshead .plot { position: relative; height: 1px; background: var(--hairline); }
+  .g-row { height: 26px; }
+  .g-row .lbl {
+    font-size: 12.5px; color: var(--ink-2); padding-right: 14px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .g-row .lbl b { color: var(--ink); font-weight: 650; font-variant-numeric: tabular-nums; }
+  .g-row.done .lbl { text-decoration: line-through; opacity: 0.55; }
+  .g-row.done .bar { opacity: 0.35; }
+  .g-row .plot { position: relative; height: 100%; }
+  .bar {
+    position: absolute; top: 50%; transform: translateY(-50%);
+    height: 11px; border-radius: 3px; min-width: 6px;
+    cursor: default;
+  }
+  .bar:hover { outline: 2px solid var(--surface); box-shadow: 0 0 0 4px var(--ring); }
+  .bar.spike { background: transparent !important; border: 2px solid; box-sizing: border-box; height: 12px; }
+  .gridline { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--hairline); }
+  .dueline { position: absolute; top: 0; bottom: 0; width: 0; border-left: 1.5px dashed var(--baseline); }
+  .todayline { position: absolute; top: 0; bottom: 0; width: 0; border-left: 1.5px solid var(--today); }
+  .g-overlay { position: absolute; left: 250px; right: 0; top: 26px; bottom: 0; pointer-events: none; }
+  .duetag {
+    position: absolute; bottom: -2px; transform: translateX(-100%);
+    font-size: 10.5px; color: var(--muted); padding-right: 5px; white-space: nowrap;
+  }
+  .todaytag {
+    position: absolute; top: -2px; transform: translateX(5px);
+    font-size: 10.5px; font-weight: 650; color: var(--today); white-space: nowrap;
+  }
+
+  #tip {
+    position: fixed; z-index: 10; display: none; pointer-events: none;
+    background: var(--tip-bg); color: var(--tip-ink);
+    border-radius: 6px; padding: 8px 11px; font-size: 12.5px; line-height: 1.45;
+    max-width: 300px; box-shadow: 0 4px 14px rgba(0,0,0,0.25);
+  }
+  #tip .t-title { font-weight: 650; }
+  #tip .t-meta { opacity: 0.75; font-variant-numeric: tabular-nums; }
+
+  /* ---------- task picker widget ---------- */
+  .picker-grid { display: grid; grid-template-columns: minmax(320px, 5fr) minmax(300px, 4fr); gap: 20px; align-items: start; }
+  @media (max-width: 860px) { .picker-grid { grid-template-columns: 1fr; } }
+  .panel-title {
+    display: flex; align-items: baseline; justify-content: space-between; gap: 10px;
+    font-size: 14px; font-weight: 680; margin: 0 0 4px;
+  }
+  .panel-title .hint { font-size: 12px; font-weight: 500; color: var(--muted); }
+  .next-row {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 9px 2px; border-bottom: 1px solid var(--hairline);
+  }
+  .next-row:last-child { border-bottom: none; }
+  .next-row input[type="checkbox"] { margin-top: 3px; accent-color: var(--accent); width: 15px; height: 15px; flex: none; cursor: pointer; }
+  .next-row .body { min-width: 0; }
+  .next-row .t { font-size: 13.5px; font-weight: 600; color: var(--ink); }
+  .next-row .t .num { font-variant-numeric: tabular-nums; }
+  .next-row .why { font-size: 12px; color: var(--muted); margin-top: 1px; }
+  .next-row .why .pr { font-weight: 650; color: var(--ink-2); }
+  .next-row .chip { width: 9px; height: 9px; border-radius: 2.5px; display: inline-block; margin-right: 6px; transform: translateY(0.5px); }
+  .all-clear { font-size: 13.5px; color: var(--ink-2); padding: 10px 2px; }
+
+  .meter { display: grid; grid-template-columns: 92px 1fr 76px; align-items: center; gap: 10px; padding: 5px 0; }
+  .meter .m-lbl { font-size: 12.5px; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .meter .m-track { height: 8px; border-radius: 4px; background: var(--hairline); overflow: hidden; }
+  .meter .m-fill { height: 100%; border-radius: 4px; background: var(--accent); min-width: 0; transition: width 0.25s; }
+  @media (prefers-reduced-motion: reduce) { .meter .m-fill { transition: none; } }
+  .meter .m-val { font-size: 12px; color: var(--muted); text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .meter-block + .meter-block { margin-top: 18px; }
+
+  .checklist { columns: 2; column-gap: 28px; margin-top: 6px; }
+  @media (max-width: 700px) { .checklist { columns: 1; } }
+  .cl-group { break-inside: avoid; margin-bottom: 14px; }
+  .cl-head { display: flex; align-items: center; gap: 7px; font-size: 11.5px; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: var(--ink-2); margin-bottom: 4px; }
+  .cl-row { display: flex; align-items: flex-start; gap: 8px; padding: 3px 0; font-size: 13px; color: var(--ink-2); }
+  .cl-row input[type="checkbox"] { margin-top: 3px; accent-color: var(--accent); flex: none; cursor: pointer; }
+  .cl-row label { cursor: pointer; }
+  .cl-row b { color: var(--ink); font-weight: 640; font-variant-numeric: tabular-nums; }
+  .cl-row.done label { text-decoration: line-through; opacity: 0.55; }
+  .reset-btn {
+    font: inherit; font-size: 12px; color: var(--muted);
+    background: none; border: 1px solid var(--hairline); border-radius: 6px;
+    padding: 3px 10px; cursor: pointer;
+  }
+  .reset-btn:hover, .reset-btn:focus-visible { color: var(--ink); border-color: var(--baseline); }
+
+  /* ---------- choose procedure ---------- */
+  ol.chain { margin: 8px 0 0; padding-left: 22px; color: var(--ink-2); font-size: 14.5px; max-width: 78ch; }
+  ol.chain li { margin: 7px 0; }
+  ol.chain b { color: var(--ink); }
+
+  /* ---------- tables ---------- */
+  .tbl-scroll { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+  th {
+    text-align: left; font-size: 11.5px; letter-spacing: 0.09em; text-transform: uppercase;
+    color: var(--muted); font-weight: 650; padding: 8px 14px 8px 0;
+    border-bottom: 1px solid var(--baseline); white-space: nowrap;
+  }
+  td { padding: 9px 14px 9px 0; border-bottom: 1px solid var(--hairline); vertical-align: top; color: var(--ink-2); }
+  td:first-child, th:first-child { padding-left: 2px; }
+  tr:last-child td { border-bottom: none; }
+  td.wk { font-weight: 650; color: var(--ink); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  td.dates { font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--muted); }
+  td.focus { color: var(--ink); font-weight: 550; }
+  td b { color: var(--ink); font-weight: 650; }
+  .mono { font-variant-numeric: tabular-nums; }
+
+  .ms-block { margin-top: 26px; }
+  .ms-title {
+    display: flex; align-items: baseline; gap: 10px; margin: 0 0 4px;
+    font-size: 16px; font-weight: 680;
+  }
+  .ms-title .chip { transform: translateY(1px); }
+  .ms-title .due { font-size: 13px; font-weight: 500; color: var(--muted); }
+
+  .note {
+    border-left: 3px solid var(--m2);
+    background: color-mix(in srgb, var(--m2) 7%, var(--surface));
+    border-radius: 0 8px 8px 0;
+    padding: 12px 16px; font-size: 14px; color: var(--ink-2);
+    margin: 18px 0 0; max-width: 78ch;
+  }
+  .note b { color: var(--ink); }
+
+  ul.rules { margin: 8px 0 0; padding-left: 20px; color: var(--ink-2); font-size: 14.5px; max-width: 80ch; }
+  ul.rules li { margin: 6px 0; }
+  ul.rules b { color: var(--ink); }
+
+  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  @media (max-width: 780px) { .cols { grid-template-columns: 1fr; } }
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <p class="eyebrow">ShinkaScan · shinkaScanApp</p>
+  <h1>Master Development Plan</h1>
+  <p class="lede">Scan a card serial (<span class="mono">AE-086</span>) → look it up in the card database → show its market price → match collectors and let them <strong>trade directly, cutting out middlemen</strong>. Four milestones, July 2026 to February 2027; releases progress toward trading, not listing.</p>
+  <div class="meta-row">
+    <span>25 top-level issues · 65 sub-issues</span>
+    <span>Plan dated Jul 7, 2026</span>
+    <span><a href="https://github.com/users/TrexChoong/projects/3">Project board</a></span>
+    <span><a href="https://github.com/TrexChoong/shinkaScanApp/milestones">Milestones</a></span>
+  </div>
+
+  <h2>Timeline</h2>
+  <p class="sub">Solid bars are build work; outlined bars are decision spikes that gate everything after them. Dashed lines mark milestone due dates — each chain deliberately lands about a week early, and that buffer is schedule insurance, not free capacity. Hover any bar for details; issues ticked off below show as struck through here.</p>
+  <div class="card">
+    <div class="legend" id="legend"></div>
+    <div class="gantt-scroll"><div class="gantt" id="gantt"></div></div>
+  </div>
+
+  <h2>Choosing the next task</h2>
+  <p class="sub">Solo project, so the WIP limit is one: finish what's in progress before starting anything new. When you need a task, run this filter chain top to bottom — stop at the first rule that leaves a single issue.</p>
+  <ol class="chain">
+    <li><b>Only unblocked work is eligible.</b> Open, and every "Blocked by" issue in its GitHub sidebar closed. The <i>Up next</i> list below computes this live from the dependency graph.</li>
+    <li><b>Spikes before build work.</b> #6 gates every M1 issue; #25 gates all of M2 and shapes M3. A day of building while a spike waits is a day bet on an undecided architecture.</li>
+    <li><b>Current milestone first.</b> Don't reach forward unless the open milestone has nothing eligible — the one designed exception is #25, whose window intentionally opens during M1's buffer week.</li>
+    <li><b>Highest priority:</b> P0 → P1 → P2.</li>
+    <li><b>Biggest unblocker.</b> Prefer the issue that releases the most downstream work (closing #9 frees four issues; closing #15 frees none).</li>
+    <li><b>Earliest scheduled start, then smallest estimate</b> — stay on schedule, and when equal, bank the quick win.</li>
+  </ol>
+  <p class="sub" style="margin-top:14px">Within an issue, work sub-issues top to bottom — they're listed in dependency order. If you get hard-blocked mid-task, comment exactly where you stopped, move it back to Backlog, and re-run the chain, preferring the same <span class="mono">area:*</span> to keep context warm.</p>
+
+  <div class="picker-grid">
+    <div class="card">
+      <p class="panel-title">Up next <span class="hint">ranked by the rules above</span></p>
+      <div id="upnext"></div>
+    </div>
+    <div class="card">
+      <p class="panel-title">Progress <button class="reset-btn" id="reset" type="button">Reset checks</button></p>
+      <div class="meter-block">
+        <p class="cl-head">By milestone</p>
+        <div id="meters-ms"></div>
+      </div>
+      <div class="meter-block">
+        <p class="cl-head">By component</p>
+        <div id="meters-area"></div>
+      </div>
+    </div>
+  </div>
+  <div class="card" style="margin-top:20px">
+    <p class="panel-title">All issues <span class="hint">checks are saved in this browser only — they don't close GitHub issues</span></p>
+    <div class="checklist" id="checklist"></div>
+  </div>
+
+  <h2>Components</h2>
+  <p class="sub">Components map one-to-one onto <span class="mono">area:*</span> labels, so every row is a live issue query on GitHub. Percentages above are weighted by estimate (focus-days), not issue count.</p>
+  <div class="card tbl-scroll">
+    <table>
+      <thead><tr><th>Component</th><th>Label</th><th>Scope</th><th>Key issues</th><th>Active</th></tr></thead>
+      <tbody>
+        <tr><td class="focus">Scan &amp; OCR</td><td class="mono">area:scan-ocr</td><td>Camera flow, serial extraction, misread tolerance</td><td class="mono">#5 #13</td><td class="dates">Jul 2026</td></tr>
+        <tr><td class="focus">Card data</td><td class="mono">area:data</td><td>drift/SQLite schema, scrape pipeline, card relationships, expansion updates</td><td class="mono">#1 #3 #4 #5 #14 #16</td><td class="dates">Jul – Sep 2026</td></tr>
+        <tr><td class="focus">Pricing</td><td class="mono">area:pricing</td><td>Source decision, daily refresh, price display, history, collection value</td><td class="mono">#6 #7 #8 #17 #18</td><td class="dates">Aug – Sep 2026</td></tr>
+        <tr><td class="focus">Backend</td><td class="mono">area:backend</td><td>Stack decision, accounts, collection sync, matching queries, push</td><td class="mono">#25 #9 #11 #20 #22</td><td class="dates">Sep – Dec 2026</td></tr>
+        <tr><td class="focus">Trading</td><td class="mono">area:trading</td><td>For-trade/want lists, matching, proposals, completion, region, privacy, trust</td><td class="mono">#10 #11 #12 #19 #21–#24</td><td class="dates">Nov 2026 – Feb 2027</td></tr>
+        <tr><td class="focus">UI</td><td class="mono">area:ui</td><td>Screens and UX across all features</td><td class="mono">#3 #4 #7 #10 #14 #15 #18</td><td class="dates">Cross-cutting</td></tr>
+        <tr><td class="focus">Infra</td><td class="mono">area:infra</td><td>Tests/CI, scraper jobs, cron pipelines, notification plumbing</td><td class="mono">#2 #4 #8 #16 #20</td><td class="dates">Jul – Dec 2026</td></tr>
+        <tr><td class="focus">Web</td><td class="mono">area:web</td><td>Flutter web support (sqlite3.wasm, drift worker, JS interop)</td><td class="mono">#1 #2</td><td class="dates">Jul 2026</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="note"><b>Two decision gates rule the schedule:</b> #6 (pricing source — gates all of M1) and #25 (trading backend — shapes M2 <i>and</i> M3, decided by prototyping the matching query). Neither milestone's build work starts until its spike lands.</p>
+
+  <h2>Week by week</h2>
+  <p class="sub">Week numbers count from the week of July 6, 2026. Bold references are top-level issues; plain <span class="mono">#nn</span> are their sub-issues.</p>
+
+  <div class="ms-block">
+    <p class="ms-title"><span class="chip" style="background:var(--m0)"></span>M0 · Foundation <span class="due">due Jul 31, 2026</span></p>
+    <div class="card tbl-scroll"><table>
+      <thead><tr><th>Week</th><th>Dates</th><th>Focus</th><th>Work</th></tr></thead>
+      <tbody>
+        <tr><td class="wk">W1</td><td class="dates">Jul 6–10</td><td class="focus">Unblock the test suite</td><td><b>#2</b> fix <span class="mono">flutter test</span> compile, drop stale js_interop dep — done by Friday. Start <b>#5</b>: getByCardno lookup (#29)</td></tr>
+        <tr><td class="wk">W2</td><td class="dates">Jul 13–17</td><td class="focus">Core scan loop works</td><td>Finish <b>#5</b>: card shown after scan (#30), real add-card flow (#31). Start <b>#3</b> boosters: decide data source (#26)</td></tr>
+        <tr><td class="wk">W3</td><td class="dates">Jul 20–24</td><td class="focus">Fan out, polish the loop</td><td>Finish <b>#3</b> (#27 #28). Start <b>#13</b> OCR hardening (#32 #33), <b>#14</b> search, <b>#4</b> relationship scrape (#88). Wed: start <b>#1</b> web SQLite</td></tr>
+        <tr><td class="wk">W4</td><td class="dates">Jul 27–31</td><td class="focus">Land everything, ship M0</td><td>Finish <b>#13</b> (#34 #35), <b>#14</b>, <b>#4</b> (schema #89, related-cards UI #90), <b>#1</b>, <b>#15</b> image cache by Wed. Thu–Fri buffer. <b>M0 ships Jul 31</b></td></tr>
+      </tbody>
+    </table></div>
+  </div>
+
+  <div class="ms-block">
+    <p class="ms-title"><span class="chip" style="background:var(--m1)"></span>M1 · Card pricing <span class="due">due Sep 30, 2026</span></p>
+    <div class="card tbl-scroll"><table>
+      <thead><tr><th>Week</th><th>Dates</th><th>Focus</th><th>Work</th></tr></thead>
+      <tbody>
+        <tr><td class="wk">W5</td><td class="dates">Aug 3–7</td><td class="focus">Pricing spike</td><td><b>#6</b>: identify price sources, check ToS, prototype the scrape on a few cards</td></tr>
+        <tr><td class="wk">W6</td><td class="dates">Aug 10–14</td><td class="focus">Decision</td><td><b>#6</b>: pick live-scrape vs daily-cron DB; update #7 #8 #16. <b>Gate opens for all M1 build work</b></td></tr>
+        <tr><td class="wk">W7</td><td class="dates">Aug 17–21</td><td class="focus">Build starts on three fronts</td><td><b>#7</b> price schema fields (#36) · <b>#8</b> price scraper job (#40) · <b>#16</b> expansion detection (#45)</td></tr>
+        <tr><td class="wk">W8</td><td class="dates">Aug 24–28</td><td class="focus">Pipeline takes shape</td><td><b>#8</b>: cron schedule (#41), publish/distribution mechanism (#42 — the channel #16 reuses). <b>#7</b>: price on scan result (#37)</td></tr>
+        <tr><td class="wk">W9</td><td class="dates">Aug 31 – Sep 4</td><td class="focus">History schema lands early</td><td><b>#8</b>: price_history schema (#43 — unblocks #17). <b>#7</b>: price on card detail (#38). <b>#16</b> continues</td></tr>
+        <tr><td class="wk">W10</td><td class="dates">Sep 7–11</td><td class="focus">Price UI complete</td><td>Finish <b>#7</b> (fallback UI #39). Start <b>#17</b> history ingestion (#48)</td></tr>
+        <tr><td class="wk">W11</td><td class="dates">Sep 14–18</td><td class="focus">Derived features</td><td>Finish <b>#16</b> (versioned updates #46, indicator #47). Start <b>#18</b> collection value. <b>#17</b> sparkline (#49)</td></tr>
+        <tr><td class="wk">W12</td><td class="dates">Sep 21–25</td><td class="focus">Land everything</td><td>Finish <b>#8</b> (alerting #44, Wed), <b>#17</b> (retention #50), <b>#18</b> by Friday</td></tr>
+        <tr><td class="wk">W13</td><td class="dates">Sep 28–30</td><td class="focus">Buffer</td><td><b>M1 ships Sep 30.</b> M2's spike is already underway (below)</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+
+  <div class="ms-block">
+    <p class="ms-title"><span class="chip" style="background:var(--m2)"></span>M2 · Trading MVP <span class="due">due Dec 31, 2026</span></p>
+    <div class="card tbl-scroll"><table>
+      <thead><tr><th>Week</th><th>Dates</th><th>Focus</th><th>Work</th></tr></thead>
+      <tbody>
+        <tr><td class="wk">W13</td><td class="dates">Sep 28 – Oct 2</td><td class="focus">Backend spike</td><td><b>#25</b>: prototype the matching query (want/for-trade intersection) on Firebase vs Supabase (#51)</td></tr>
+        <tr><td class="wk">W14</td><td class="dates">Oct 5–9</td><td class="focus">Decision</td><td><b>#25</b>: document decision (#52), update all M2 issues (#53). <b>Gate opens for M2</b></td></tr>
+        <tr><td class="wk">W15</td><td class="dates">Oct 12–16</td><td class="focus">Backend foundation</td><td><b>#9</b>: project setup on the chosen stack (#54)</td></tr>
+        <tr><td class="wk">W16</td><td class="dates">Oct 19–23</td><td class="focus">Auth</td><td><b>#9</b>: sign-up / sign-in (#55)</td></tr>
+        <tr><td class="wk">W17</td><td class="dates">Oct 26–30</td><td class="focus">Identity</td><td><b>#9</b>: profile with display name + coarse region (#56)</td></tr>
+        <tr><td class="wk">W18</td><td class="dates">Nov 2–6</td><td class="focus">Sync</td><td>Finish <b>#9</b>: local collection syncs to the account (#57)</td></tr>
+        <tr><td class="wk">W19</td><td class="dates">Nov 9–13</td><td class="focus">Trading primitives</td><td><b>#10</b>: for-trade flag (#58), want list (#59)</td></tr>
+        <tr><td class="wk">W20</td><td class="dates">Nov 16–20</td><td class="focus">Lists + parallel infra</td><td><b>#10</b>: scan-result quick actions (#60). Start <b>#22</b> privacy levels and <b>#20</b> FCM setup (#70)</td></tr>
+        <tr><td class="wk">W21</td><td class="dates">Nov 23–27</td><td class="focus">Lists done, matching starts</td><td>Finish <b>#10</b> (sync #61, Wed) and <b>#22</b> (server-side enforcement, Fri). Thu: start <b>#11</b> matching query (#62)</td></tr>
+        <tr><td class="wk">W22</td><td class="dates">Nov 30 – Dec 4</td><td class="focus">Matching</td><td><b>#11</b>: match results screen with value balance (#63). Start <b>#19</b> region selector (#67)</td></tr>
+        <tr><td class="wk">W23</td><td class="dates">Dec 7–11</td><td class="focus">Proposals</td><td><b>#11</b>: create/send proposals (#64), counter/accept/decline (#65). Finish <b>#20</b> (deep links #71, prefs #72). Start <b>#21</b> confirmation flow (#73)</td></tr>
+        <tr><td class="wk">W24</td><td class="dates">Dec 14–18</td><td class="focus">The trade loop closes</td><td>Finish <b>#11</b> (push wiring #66, Tue) and <b>#19</b> (region ranking #68, mail toggle #69). <b>#21</b>: auto-move cards (#74)</td></tr>
+        <tr><td class="wk">W25</td><td class="dates">Dec 21–25</td><td class="focus">Completion</td><td><b>#21</b>: completed-trade records (#75 — the data #12 is built on), expiry/cancellation (#76)</td></tr>
+        <tr><td class="wk">W26</td><td class="dates">Dec 28–31</td><td class="focus">Land + buffer</td><td>Finish <b>#21</b> Monday. <b>M2 ships Dec 31</b></td></tr>
+      </tbody>
+    </table></div>
+  </div>
+
+  <div class="ms-block">
+    <p class="ms-title"><span class="chip" style="background:var(--m3)"></span>M3 · Trust &amp; community <span class="due">due Feb 28, 2027</span></p>
+    <div class="card tbl-scroll"><table>
+      <thead><tr><th>Week</th><th>Dates</th><th>Focus</th><th>Work</th></tr></thead>
+      <tbody>
+        <tr><td class="wk">W27</td><td class="dates">Jan 4–8</td><td class="focus">Trust groundwork</td><td><b>#24</b>: block-user primitive first (#77 — messaging depends on it). <b>#12</b>: surface completed trades (#81)</td></tr>
+        <tr><td class="wk">W28</td><td class="dates">Jan 11–15</td><td class="focus">Reporting</td><td><b>#24</b>: report flows (#78). <b>#12</b>: post-trade ratings (#82)</td></tr>
+        <tr><td class="wk">W29</td><td class="dates">Jan 18–22</td><td class="focus">Triage</td><td><b>#24</b>: admin triage view (#79)</td></tr>
+        <tr><td class="wk">W30</td><td class="dates">Jan 25–29</td><td class="focus">Messaging starts on a safe base</td><td>Finish <b>#24</b> (disputes → reputation #80). Start <b>#23</b>: chat scoped to match/proposal (#84)</td></tr>
+        <tr><td class="wk">W31</td><td class="dates">Feb 1–5</td><td class="focus">Chat</td><td><b>#23</b>: photo sharing for condition checks (#85)</td></tr>
+        <tr><td class="wk">W32</td><td class="dates">Feb 8–12</td><td class="focus">Chat integration</td><td><b>#23</b>: unread badges + push (#86), enforce blocks (#87)</td></tr>
+        <tr><td class="wk">W33</td><td class="dates">Feb 15–19</td><td class="focus">Land everything</td><td>Finish <b>#23</b> and <b>#12</b> (reputation summary #83) by Friday</td></tr>
+        <tr><td class="wk">W34</td><td class="dates">Feb 22–26</td><td class="focus">Buffer</td><td><b>M3 ships Feb 28</b></td></tr>
+      </tbody>
+    </table></div>
+  </div>
+
+  <p class="note"><b>Capacity flag:</b> M0 carries ~19 focus-days of estimates against ~17 working days — slightly overcommitted. Pressure valves, in order: <b>#90</b> (related-cards UI slice) then <b>#1</b> (web support). Either slides into M1 without breaking a dependency chain.</p>
+
+  <h2>Working agreements</h2>
+  <div class="cols">
+    <div class="card">
+      <p class="ms-title" style="font-size:14px">Picking work</p>
+      <ul class="rules">
+        <li><b>Next task</b> = the filter chain under "Choosing the next task" above; the Up next widget runs it for you.</li>
+        <li><b>Tasks ≥ 3 focus-days</b> carry native sub-issues; parent cards show progress on the board.</li>
+        <li><b>Ordering</b> is encoded as native GitHub "blocked by" relations — GitHub warns if a blocked issue is closed early.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <p class="ms-title" style="font-size:14px">Keeping the plan honest</p>
+      <ul class="rules">
+        <li><b>Labels:</b> type (feature / bug / spike:*) + component (area:*). Priority, size, and dates live on the board, not in labels.</li>
+        <li><b>Slipping?</b> Use the milestone buffer first, then the named pressure valves. Never silently move a due date — re-plan the chain.</li>
+        <li><b>After M3:</b> growing trading liquidity (users, community, localization) is product work outside this plan.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div id="tip"></div>
+
+<script>
+(function () {
+  const MS = {
+    m0: { name: "M0 · Foundation",        due: "2026-07-31", var: "--m0" },
+    m1: { name: "M1 · Card pricing",      due: "2026-09-30", var: "--m1" },
+    m2: { name: "M2 · Trading MVP",       due: "2026-12-31", var: "--m2" },
+    m3: { name: "M3 · Trust & community", due: "2027-02-28", var: "--m3" },
+  };
+  const MS_ORDER = ["m0", "m1", "m2", "m3"];
+  const AREAS = {
+    scan: "Scan & OCR", data: "Card data", pricing: "Pricing", backend: "Backend",
+    trading: "Trading", ui: "UI", infra: "Infra", web: "Web",
+  };
+  // n, title, start, end, milestone, est, prio, areas, deps(blocked-by), spike?
+  const ITEMS = [
+    [2,  "Fix flutter test compile",    "2026-07-07", "2026-07-10", "m0", 1, 0, ["infra","web"],        []],
+    [5,  "Scan ↔ DB wiring",            "2026-07-08", "2026-07-17", "m0", 3, 0, ["scan","data"],        []],
+    [3,  "Boosters on real data",       "2026-07-17", "2026-07-24", "m0", 3, 1, ["ui","data"],          []],
+    [13, "OCR serial hardening",        "2026-07-20", "2026-07-28", "m0", 3, 1, ["scan"],               [5]],
+    [14, "Card search & filters",       "2026-07-20", "2026-07-28", "m0", 2, 1, ["ui","data"],          []],
+    [4,  "Card relationships",          "2026-07-20", "2026-07-29", "m0", 3, 2, ["data","ui","infra"],  []],
+    [1,  "Web SQLite backend",          "2026-07-22", "2026-07-29", "m0", 2, 2, ["web","data"],         []],
+    [15, "Card image cache",            "2026-07-24", "2026-07-29", "m0", 2, 2, ["ui"],                 []],
+    [6,  "Spike: pricing source",       "2026-08-03", "2026-08-14", "m1", 2, 1, ["pricing"],            [], true],
+    [7,  "Price on scan & detail",      "2026-08-17", "2026-09-11", "m1", 3, 1, ["pricing","ui"],       [5,6]],
+    [16, "Expansion update pipeline",   "2026-08-17", "2026-09-18", "m1", 4, 1, ["data","infra"],       [6,8]],
+    [8,  "Daily price refresh",         "2026-08-17", "2026-09-23", "m1", 5, 1, ["pricing","infra"],    [6]],
+    [17, "Price history & trends",      "2026-09-07", "2026-09-25", "m1", 3, 2, ["pricing"],            [8]],
+    [18, "Collection value summary",    "2026-09-14", "2026-09-25", "m1", 2, 2, ["pricing","ui"],       [7]],
+    [25, "Spike: trading backend",      "2026-09-28", "2026-10-09", "m2", 3, 1, ["backend"],            [], true],
+    [9,  "Accounts & collection sync",  "2026-10-12", "2026-11-06", "m2", 5, 2, ["backend"],            [25]],
+    [10, "For-trade / want lists",      "2026-11-09", "2026-11-25", "m2", 3, 2, ["trading","ui"],       [9]],
+    [22, "Collection privacy controls", "2026-11-16", "2026-11-27", "m2", 2, 2, ["trading","backend"],  [9,10]],
+    [20, "Push notifications",          "2026-11-16", "2026-12-11", "m2", 3, 2, ["backend","infra"],    [9]],
+    [11, "Trade matching & proposals",  "2026-11-26", "2026-12-15", "m2", 8, 2, ["trading","backend"],  [10,22]],
+    [19, "Region-based discovery",      "2026-12-01", "2026-12-18", "m2", 3, 2, ["trading"],            [9,11]],
+    [21, "Trade completion",            "2026-12-14", "2026-12-28", "m2", 3, 2, ["trading"],            [11]],
+    [24, "Blocking & disputes",         "2027-01-04", "2027-01-29", "m3", 3, 2, ["trading"],            [9]],
+    [12, "Reputation & trade history",  "2027-01-04", "2027-02-19", "m3", 5, 2, ["trading"],            [21]],
+    [23, "In-app messaging",            "2027-01-25", "2027-02-19", "m3", 5, 2, ["trading"],            [20,24]],
+  ];
+  const byN = {};
+  ITEMS.forEach(it => { byN[it[0]] = it; });
+
+  // transitive dependents (how many issues each one unblocks)
+  const dependents = {};
+  ITEMS.forEach(it => { dependents[it[0]] = new Set(); });
+  function collect(n, into) {
+    for (const it of ITEMS) {
+      if (it[8].includes(n) && !into.has(it[0])) { into.add(it[0]); collect(it[0], into); }
+    }
+  }
+  ITEMS.forEach(it => collect(it[0], dependents[it[0]]));
+
+  // done-state, persisted locally
+  const KEY = "shinkascan-plan-done";
+  let done;
+  try { done = new Set(JSON.parse(localStorage.getItem(KEY) || "[]")); }
+  catch (e) { done = new Set(); }
+  const save = () => { try { localStorage.setItem(KEY, JSON.stringify([...done])); } catch (e) {} };
+
+  const T0 = Date.parse("2026-07-01");
+  const T1 = Date.parse("2027-03-01");
+  const pct = d => ((Date.parse(d) - T0) / (T1 - T0)) * 100;
+  const fmt = d => new Date(d + "T00:00:00").toLocaleDateString(undefined, { month: "short", day: "numeric" });
+
+  // ---------- legend ----------
+  document.getElementById("legend").innerHTML =
+    Object.values(MS).map(m =>
+      `<span class="item"><span class="chip" style="background:var(${m.var})"></span>${m.name} <span class="due">· due ${fmt(m.due)}</span></span>`
+    ).join("") +
+    `<span class="item"><span class="chip spikey"></span>decision spike</span>`;
+
+  // ---------- gantt ----------
+  const g = document.getElementById("gantt");
+  function renderGantt() {
+    const months = ["2026-07-01","2026-08-01","2026-09-01","2026-10-01","2026-11-01","2026-12-01","2027-01-01","2027-02-01"];
+    const mNames = ["Jul","Aug","Sep","Oct","Nov","Dec","Jan ’27","Feb"];
+    let html = `<div class="g-axis"><div></div><div class="plot">` +
+      months.map((m,i) => `<span class="tick" style="left:${pct(m)}%">${mNames[i]}</span>`).join("") +
+      `</div></div>`;
+    let lastKey = null;
+    for (const [n, title, s, e, key, est, , , , spike] of ITEMS) {
+      if (key !== lastKey) {
+        const m = MS[key];
+        html += `<div class="g-mshead"><div class="lbl"><span class="chip" style="background:var(${m.var})"></span>${m.name}</div><div class="plot"></div></div>`;
+        lastKey = key;
+      }
+      const m = MS[key];
+      const left = pct(s), width = Math.max(pct(e) - left, 0.6);
+      html += `<div class="g-row${done.has(n) ? " done" : ""}">
+        <div class="lbl" title="#${n} ${title}"><b>#${n}</b> ${title}</div>
+        <div class="plot"><div class="bar${spike ? " spike" : ""}" style="left:${left}%;width:${width}%;background:var(${m.var});border-color:var(${m.var})"
+          data-tip="<span class='t-title'>#${n} ${title}${spike ? " (spike)" : ""}</span><br><span class='t-meta'>${fmt(s)} → ${fmt(e)} · ~${est} focus-day${est > 1 ? "s" : ""} · ${m.name}${done.has(n) ? " · ✓ done" : ""}</span>"></div></div>
+      </div>`;
+    }
+    g.innerHTML = html;
+    const overlay = document.createElement("div");
+    overlay.className = "g-overlay";
+    overlay.innerHTML =
+      months.slice(1).map(m => `<div class="gridline" style="left:${pct(m)}%"></div>`).join("") +
+      Object.values(MS).map(m =>
+        `<div class="dueline" style="left:${pct(m.due)}%"></div><span class="duetag" style="left:${pct(m.due)}%">${m.name.slice(0,2)} due ${fmt(m.due)}</span>`
+      ).join("") +
+      `<div class="todayline" style="left:${pct("2026-07-07")}%"></div><span class="todaytag" style="left:${pct("2026-07-07")}%">Jul 7</span>`;
+    g.appendChild(overlay);
+  }
+
+  // ---------- task picker ----------
+  const PRIO = ["P0", "P1", "P2"];
+  function eligible() {
+    return ITEMS.filter(it => !done.has(it[0]) && it[8].every(d => done.has(d)));
+  }
+  function currentMs() {
+    for (const key of MS_ORDER) {
+      if (ITEMS.some(it => it[4] === key && !done.has(it[0]))) return key;
+    }
+    return null;
+  }
+  function rankKey(it) {
+    const [n, , s, , key, est, prio, , , spike] = [it[0], it[1], it[2], it[3], it[4], it[5], it[6], it[7], it[8], it[9]];
+    const cur = currentMs();
+    return [
+      spike ? 0 : 1,                                   // spikes first
+      it[4] === cur ? 0 : MS_ORDER.indexOf(it[4]) + 1, // current milestone first
+      it[6],                                           // priority
+      -dependents[it[0]].size,                         // biggest unblocker
+      Date.parse(it[2]),                               // earliest start
+      it[5],                                           // smallest estimate
+    ];
+  }
+  function cmp(a, b) {
+    const ka = rankKey(a), kb = rankKey(b);
+    for (let i = 0; i < ka.length; i++) if (ka[i] !== kb[i]) return ka[i] - kb[i];
+    return 0;
+  }
+  function renderUpNext() {
+    const el = document.getElementById("upnext");
+    const list = eligible().sort(cmp).slice(0, 7);
+    if (!list.length) {
+      el.innerHTML = `<p class="all-clear">Everything is checked off — the plan is complete. 🎉</p>`;
+      return;
+    }
+    el.innerHTML = list.map((it, i) => {
+      const [n, title, s, , key, est, prio, , , spike] = [it[0], it[1], it[2], it[3], it[4], it[5], it[6], it[7], it[8], it[9]];
+      const unb = dependents[n].size;
+      const why = [
+        `<span class="pr">${PRIO[prio]}</span>`,
+        spike ? "decision spike — gates the milestone" : null,
+        unb ? `unblocks ${unb} issue${unb > 1 ? "s" : ""}` : null,
+        `starts ${fmt(s)}`,
+        `~${est}d`,
+      ].filter(Boolean).join(" · ");
+      return `<div class="next-row">
+        <input type="checkbox" id="nx${n}" data-n="${n}" aria-label="Mark #${n} done">
+        <div class="body">
+          <div class="t"><span class="chip" style="background:var(${MS[key].var})"></span><span class="num">#${n}</span> ${title}${i === 0 ? " ←" : ""}</div>
+          <div class="why">${why}</div>
+        </div>
+      </div>`;
+    }).join("");
+  }
+  function meterRow(label, doneEst, totEst, hueVar) {
+    const p = totEst ? Math.round((doneEst / totEst) * 100) : 0;
+    return `<div class="meter">
+      <span class="m-lbl" title="${label}">${label}</span>
+      <span class="m-track"><span class="m-fill" style="width:${p}%;${hueVar ? `background:var(${hueVar})` : ""}"></span></span>
+      <span class="m-val">${p}% · ${doneEst}/${totEst}d</span>
+    </div>`;
+  }
+  function renderMeters() {
+    let ms = "";
+    for (const key of MS_ORDER) {
+      const items = ITEMS.filter(it => it[4] === key);
+      const tot = items.reduce((a, it) => a + it[5], 0);
+      const d = items.filter(it => done.has(it[0])).reduce((a, it) => a + it[5], 0);
+      ms += meterRow(MS[key].name.slice(0, 2), d, tot, MS[key].var);
+    }
+    document.getElementById("meters-ms").innerHTML = ms;
+    let ar = "";
+    for (const [k, name] of Object.entries(AREAS)) {
+      const items = ITEMS.filter(it => it[7].includes(k));
+      const tot = items.reduce((a, it) => a + it[5], 0);
+      const d = items.filter(it => done.has(it[0])).reduce((a, it) => a + it[5], 0);
+      ar += meterRow(name, d, tot, null);
+    }
+    document.getElementById("meters-area").innerHTML = ar;
+  }
+  function renderChecklist() {
+    const el = document.getElementById("checklist");
+    el.innerHTML = MS_ORDER.map(key => {
+      const m = MS[key];
+      const rows = ITEMS.filter(it => it[4] === key).map(it => {
+        const n = it[0];
+        return `<div class="cl-row${done.has(n) ? " done" : ""}">
+          <input type="checkbox" id="cl${n}" data-n="${n}" ${done.has(n) ? "checked" : ""}>
+          <label for="cl${n}"><b>#${n}</b> ${it[1]}</label>
+        </div>`;
+      }).join("");
+      return `<div class="cl-group"><p class="cl-head"><span class="chip" style="background:var(${m.var})"></span>${m.name}</p>${rows}</div>`;
+    }).join("");
+  }
+  function renderAll() { renderGantt(); renderUpNext(); renderMeters(); renderChecklist(); }
+  renderAll();
+
+  document.addEventListener("change", ev => {
+    const n = ev.target && ev.target.dataset ? Number(ev.target.dataset.n) : NaN;
+    if (!n) return;
+    if (ev.target.checked) done.add(n); else done.delete(n);
+    save();
+    renderAll();
+  });
+  document.getElementById("reset").addEventListener("click", () => {
+    done = new Set(); save(); renderAll();
+  });
+
+  // ---------- tooltip ----------
+  const tip = document.getElementById("tip");
+  g.addEventListener("mousemove", ev => {
+    const bar = ev.target.closest(".bar");
+    if (!bar) { tip.style.display = "none"; return; }
+    tip.innerHTML = bar.dataset.tip;
+    tip.style.display = "block";
+    const x = Math.min(ev.clientX + 14, window.innerWidth - tip.offsetWidth - 10);
+    const y = Math.min(ev.clientY + 14, window.innerHeight - tip.offsetHeight - 10);
+    tip.style.left = x + "px";
+    tip.style.top = y + "px";
+  });
+  g.addEventListener("mouseleave", () => { tip.style.display = "none"; });
+})();
+</script>
+</body>
+</html>

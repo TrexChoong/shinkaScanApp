@@ -1,16 +1,22 @@
 # shinka_scan_app
 
-A new Flutter project.
+The Flutter application for **ShinkaScan** — scan a card's serial number, look it up in the local card database, and (per the roadmap) check prices and trade with other collectors.
 
-## Getting Started
+See the [repository README](../README.md) for the project overview and setup, and the
+[master development plan](../master_development_plan.md) for the component map and schedule.
 
-This project is a starting point for a Flutter application.
+## Quick start
 
-A few resources to get you started if this is your first Flutter project:
+```sh
+flutter pub get
+dart run build_runner build   # regenerate drift code after schema changes
+flutter run                   # Android/iOS/desktop (web not supported yet — see issue #1)
+```
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+## Layout
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+- `lib/data/` — drift (SQLite) database, CSV seeder, card repository
+- `lib/models/` — `TCGCard`, `Booster`
+- `lib/screens/` — Cards, Boosters, Collection, OCR scan
+- `lib/services/` — OCR service (mobile / web / stub via conditional imports)
+- `DB/250615/` — scraped card data (`Results.csv`), seeded into SQLite on first run
