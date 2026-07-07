@@ -1,0 +1,236 @@
+name: Board dependency automation
+
+# Replicates the "Choosing the next task" widget on the live project board:
+#   1. An OPEN top-level issue is set to Status = Ready when ALL its
+#      "Blocked by" issues are closed, and back to Backlog if any reopen.
+#   2. When every sub-issue of a parent is closed, the parent is closed —
+#      which cascades: the parent's own dependents then re-evaluate to Ready.
+#
+# Status is only ever moved between Backlog <-> Ready. In progress / In review /
+# Done are treated as human-owned and never overridden.
+#
+# Requires a repo secret PROJECTS_TOKEN (see .github/workflows/README.md) — the
+# default GITHUB_TOKEN cannot write to a user-owned ProjectV2.
+
+on:
+  issues:
+    types: [opened, closed, reopened]
+  workflow_dispatch: {}          # manual full reconciliation sweep
+  schedule:
+    - cron: '17 * * * *'         # hourly safety net: catches dependency edits,
+                                  # which do not emit issue webhook events
+
+permissions:
+  issues: write
+  contents: read
+
+concurrency:
+  group: board-automation
+  cancel-in-progress: false
+
+env:
+  PROJECT_OWNER: TrexChoong
+  PROJECT_NUMBER: '3'
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.PROJECTS_TOKEN }}
+          script: |
+            const OWNER = context.repo.owner;
+            const REPO  = context.repo.repo;
+            const PROJECT_OWNER = process.env.PROJECT_OWNER;
+            const PROJECT_NUMBER = Number(process.env.PROJECT_NUMBER);
+
+            // Status values this automation is allowed to change FROM.
+            // Anything else (In progress / In review / Done) is human-owned.
+            const AUTO_MANAGED = new Set([null, undefined, '', 'Backlog', 'Ready']);
+
+            // ---- project metadata: id, Status field id, option name -> id ----
+            const meta = await github.graphql(`
+              query($login:String!, $num:Int!) {
+                user(login:$login) {
+                  projectV2(number:$num) {
+                    id
+                    field(name:"Status") {
+                      ... on ProjectV2SingleSelectField { id options { id name } }
+                    }
+                  }
+                }
+              }`, { login: PROJECT_OWNER, num: PROJECT_NUMBER });
+
+            const projectId = meta.user.projectV2.id;
+            const statusFieldId = meta.user.projectV2.field.id;
+            const OPT = {};
+            for (const o of meta.user.projectV2.field.options) OPT[o.name] = o.id;
+
+            // ---- REST helpers for the dependency + sub-issue graph ----
+            async function blockedBy(n) {   // issues that block n
+              try {
+                const r = await github.request(
+                  'GET /repos/{owner}/{repo}/issues/{issue_number}/dependencies/blocked_by',
+                  { owner: OWNER, repo: REPO, issue_number: n, per_page: 100 });
+                return r.data;
+              } catch (e) { if (e.status === 404) return []; throw e; }
+            }
+            async function blocking(n) {     // issues that n blocks (its dependents)
+              try {
+                const r = await github.request(
+                  'GET /repos/{owner}/{repo}/issues/{issue_number}/dependencies/blocking',
+                  { owner: OWNER, repo: REPO, issue_number: n, per_page: 100 });
+                return r.data;
+              } catch (e) { if (e.status === 404) return []; throw e; }
+            }
+            async function subIssues(n) {
+              try {
+                const r = await github.request(
+                  'GET /repos/{owner}/{repo}/issues/{issue_number}/sub_issues',
+                  { owner: OWNER, repo: REPO, issue_number: n, per_page: 100 });
+                return r.data;
+              } catch (e) { if (e.status === 404) return []; throw e; }
+            }
+
+            // issue -> { itemId, status, state, parent } within THIS project
+            async function issueInfo(n) {
+              const r = await github.graphql(`
+                query($o:String!, $r:String!, $n:Int!) {
+                  repository(owner:$o, name:$r) {
+                    issue(number:$n) {
+                      state
+                      parent { number state }
+                      projectItems(first:20) {
+                        nodes {
+                          id
+                          project { id }
+                          fieldValueByName(name:"Status") {
+                            ... on ProjectV2ItemFieldSingleSelectValue { name }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }`, { o: OWNER, r: REPO, n });
+              const issue = r.repository.issue;
+              const item = issue.projectItems.nodes.find(x => x.project.id === projectId);
+              return {
+                itemId: item ? item.id : null,
+                status: item ? (item.fieldValueByName && item.fieldValueByName.name) : null,
+                state: issue.state,
+                parent: issue.parent,
+              };
+            }
+
+            async function setStatus(itemId, optionName) {
+              await github.graphql(`
+                mutation($p:ID!, $i:ID!, $f:ID!, $v:String!) {
+                  updateProjectV2ItemFieldValue(input:{
+                    projectId:$p, itemId:$i, fieldId:$f,
+                    value:{ singleSelectOptionId:$v }
+                  }) { clientMutationId }
+                }`, { p: projectId, i: itemId, f: statusFieldId, v: OPT[optionName] });
+            }
+
+            const changes = [];
+
+            // Set a top-level issue to Ready/Backlog based on its blockers.
+            async function reconcile(n) {
+              const info = await issueInfo(n);
+              if (!info.itemId) return;               // not on the board
+              if (info.parent) return;                // sub-issue: driven by parent, not board status
+              if (info.state !== 'OPEN') return;      // closed items are handled by the built-in "Item closed -> Done"
+              if (!AUTO_MANAGED.has(info.status)) return; // respect In progress / In review
+              const blockers = await blockedBy(n);
+              const allClear = blockers.every(b => b.state === 'closed');
+              const want = allClear ? 'Ready' : 'Backlog';
+              if (info.status !== want) {
+                await setStatus(info.itemId, want);
+                changes.push(`#${n}: ${info.status || '(none)'} -> ${want}`);
+              }
+            }
+
+            // If every sub-issue of n's parent is now closed, close the parent.
+            async function maybeCloseParent(n) {
+              const info = await issueInfo(n);
+              const parent = info.parent;
+              if (!parent || parent.state !== 'OPEN') return;
+              const subs = await subIssues(parent.number);
+              if (subs.length && subs.every(s => s.state === 'closed')) {
+                await github.rest.issues.update({
+                  owner: OWNER, repo: REPO, issue_number: parent.number, state: 'closed' });
+                changes.push(`parent #${parent.number}: all sub-issues closed -> closed (cascades)`);
+                // The resulting issues.closed event re-runs this workflow and
+                // re-evaluates the parent's own dependents.
+              }
+            }
+
+            // Reopen a parent that had been auto-closed, if a sub-issue reopens.
+            async function maybeReopenParent(n) {
+              const info = await issueInfo(n);
+              const parent = info.parent;
+              if (!parent || parent.state !== 'CLOSED') return;
+              await github.rest.issues.update({
+                owner: OWNER, repo: REPO, issue_number: parent.number, state: 'open' });
+              changes.push(`parent #${parent.number}: sub-issue reopened -> reopened`);
+            }
+
+            // ------------------------------- dispatch -------------------------------
+            const evt = context.eventName;
+
+            if (evt === 'workflow_dispatch' || evt === 'schedule') {
+              // Full sweep: reconcile every OPEN top-level item on the board.
+              let cursor = null, scanned = 0;
+              for (;;) {
+                const page = await github.graphql(`
+                  query($id:ID!, $cursor:String) {
+                    node(id:$id) {
+                      ... on ProjectV2 {
+                        items(first:100, after:$cursor) {
+                          pageInfo { hasNextPage endCursor }
+                          nodes {
+                            content {
+                              ... on Issue { number state parent { number } }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }`, { id: projectId, cursor });
+                const items = page.node.items;
+                for (const it of items.nodes) {
+                  const c = it.content;
+                  if (!c || !c.number) continue;         // draft / PR
+                  if (c.state !== 'OPEN') continue;
+                  if (c.parent) continue;                // sub-issue
+                  scanned++;
+                  await reconcile(c.number);
+                }
+                if (!items.pageInfo.hasNextPage) break;
+                cursor = items.pageInfo.endCursor;
+              }
+              core.info(`Swept ${scanned} open top-level items.`);
+            } else if (evt === 'issues') {
+              const n = context.payload.issue.number;
+              const action = context.payload.action;
+              if (action === 'closed') {
+                for (const d of await blocking(n)) await reconcile(d.number);
+                await maybeCloseParent(n);
+              } else if (action === 'reopened') {
+                for (const d of await blocking(n)) await reconcile(d.number);
+                await maybeReopenParent(n);
+              } else if (action === 'opened') {
+                await reconcile(n);
+              }
+            }
+
+            // ------------------------------- report -------------------------------
+            if (changes.length) {
+              core.summary.addHeading('Board automation', 3);
+              core.summary.addList(changes);
+              await core.summary.write();
+              for (const c of changes) core.info(c);
+            } else {
+              core.info('No status changes.');
+            }
