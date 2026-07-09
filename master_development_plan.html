@@ -209,6 +209,19 @@
     padding: 3px 10px; cursor: pointer;
   }
   .reset-btn:hover, .reset-btn:focus-visible { color: var(--ink); border-color: var(--baseline); }
+  .btn-group { display: inline-flex; gap: 8px; }
+  .sync-btn {
+    font: inherit; font-size: 12px; color: var(--accent);
+    background: none; border: 1px solid var(--accent); border-radius: 6px;
+    padding: 3px 10px; cursor: pointer;
+  }
+  .sync-btn:hover, .sync-btn:focus-visible { background: color-mix(in srgb, var(--accent) 12%, transparent); }
+  .sync-btn:disabled { opacity: 0.5; cursor: default; }
+  .sync-msg { font-size: 12px; color: var(--muted); margin: 8px 0 0; min-height: 1em; line-height: 1.45; }
+  .sync-msg.ok { color: var(--m3); }
+  .today-readout { font-size: 13px; color: var(--ink-2); margin: 12px 0 0; font-variant-numeric: tabular-nums; }
+  .today-readout b { color: var(--ink); font-weight: 640; }
+  .today-readout .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--today); margin-right: 7px; transform: translateY(0.5px); }
 
   /* ---------- choose procedure ---------- */
   ol.chain { margin: 8px 0 0; padding-left: 22px; color: var(--ink-2); font-size: 14.5px; max-width: 78ch; }
@@ -275,6 +288,7 @@
   <div class="card">
     <div class="legend" id="legend"></div>
     <div class="gantt-scroll"><div class="gantt" id="gantt"></div></div>
+    <p class="today-readout" id="todayReadout"></p>
   </div>
 
   <h2>Choosing the next task</h2>
@@ -295,7 +309,8 @@
       <div id="upnext"></div>
     </div>
     <div class="card">
-      <p class="panel-title">Progress <button class="reset-btn" id="reset" type="button">Reset checks</button></p>
+      <p class="panel-title">Progress <span class="btn-group"><button class="sync-btn" id="syncBtn" type="button">Sync from GitHub</button><button class="reset-btn" id="reset" type="button">Reset checks</button></span></p>
+      <p class="sync-msg" id="syncMsg"></p>
       <div class="meter-block">
         <p class="cl-head">By milestone</p>
         <div id="meters-ms"></div>
@@ -495,6 +510,11 @@
   const T1 = Date.parse("2027-03-01");
   const pct = d => ((Date.parse(d) - T0) / (T1 - T0)) * 100;
   const fmt = d => new Date(d + "T00:00:00").toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  const fmtY = d => new Date(d + "T00:00:00").toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+  // Real current date (local, no timezone drift), used for the "today" marker/readout.
+  const _now = new Date();
+  const TODAY_ISO = `${_now.getFullYear()}-${String(_now.getMonth() + 1).padStart(2, "0")}-${String(_now.getDate()).padStart(2, "0")}`;
+  const todayInRange = Date.parse(TODAY_ISO) >= T0 && Date.parse(TODAY_ISO) <= T1;
 
   // ---------- legend ----------
   document.getElementById("legend").innerHTML =
@@ -534,7 +554,9 @@
       Object.values(MS).map(m =>
         `<div class="dueline" style="left:${pct(m.due)}%"></div><span class="duetag" style="left:${pct(m.due)}%">${m.name.slice(0,2)} due ${fmt(m.due)}</span>`
       ).join("") +
-      `<div class="todayline" style="left:${pct("2026-07-07")}%"></div><span class="todaytag" style="left:${pct("2026-07-07")}%">Jul 7</span>`;
+      (todayInRange
+        ? `<div class="todayline" style="left:${pct(TODAY_ISO)}%"></div><span class="todaytag" style="left:${pct(TODAY_ISO)}%">${fmt(TODAY_ISO)}</span>`
+        : "");
     g.appendChild(overlay);
   }
 
@@ -632,7 +654,25 @@
       return `<div class="cl-group"><p class="cl-head"><span class="chip" style="background:var(${m.var})"></span>${m.name}</p>${rows}</div>`;
     }).join("");
   }
-  function renderAll() { renderGantt(); renderUpNext(); renderMeters(); renderChecklist(); }
+  // Where are we against the plan right now?
+  function renderTodayReadout() {
+    const el = document.getElementById("todayReadout");
+    const t = Date.parse(TODAY_ISO);
+    if (t < T0) {
+      el.innerHTML = `<span class="dot"></span>Today <b>${fmtY(TODAY_ISO)}</b> — before the plan window opens (M0 starts Jul 6, 2026).`;
+      return;
+    }
+    let active = null;
+    for (const key of MS_ORDER) { if (Date.parse(MS[key].due) >= t) { active = key; break; } }
+    if (!active) {
+      el.innerHTML = `<span class="dot"></span>Today <b>${fmtY(TODAY_ISO)}</b> — past the planned window (M3 was due ${fmt(MS.m3.due)}).`;
+      return;
+    }
+    const days = Math.round((Date.parse(MS[active].due) - t) / 86400000);
+    el.innerHTML = `<span class="dot"></span>Today <b>${fmtY(TODAY_ISO)}</b> · in <b>${MS[active].name}</b> — ${days} day${days === 1 ? "" : "s"} to its due date (${fmt(MS[active].due)}).`;
+  }
+
+  function renderAll() { renderGantt(); renderUpNext(); renderMeters(); renderChecklist(); renderTodayReadout(); }
   renderAll();
 
   // ---------- drift reminder: keep GitHub as the source of truth ----------
@@ -687,6 +727,66 @@
       `The live board reflects whatever issues are actually open or closed there.`
     );
   });
+
+  // ---------- live sync: read real open/closed state from the public repo ----------
+  // Kills state-drift: a closed issue on GitHub becomes a checked box here.
+  // Works only where network is allowed (the repo file served over http(s) or
+  // opened locally). The shared claude.ai artifact blocks all fetches by CSP, so
+  // this degrades to a clear message there.
+  async function syncFromGitHub() {
+    const btn = document.getElementById("syncBtn");
+    const msg = document.getElementById("syncMsg");
+    btn.disabled = true;
+    msg.className = "sync-msg";
+    msg.textContent = "Syncing from GitHub…";
+    const hhmm = ts => new Date(ts).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
+    try {
+      // One request, sorted ascending so the tracked top-level issues (#1–#25)
+      // always fall on page 1 — they're the first issues ever created.
+      const api = REPO_URL.replace("github.com", "api.github.com/repos");
+      const res = await fetch(`${api}/issues?state=all&sort=created&direction=asc&per_page=100`, {
+        headers: { "Accept": "application/vnd.github+json" },
+      });
+      const remaining = res.headers.get("x-ratelimit-remaining");
+      if (res.status === 403 && remaining === "0") {
+        const reset = Number(res.headers.get("x-ratelimit-reset")) * 1000;
+        msg.className = "sync-msg";
+        msg.textContent = `GitHub's unauthenticated rate limit (60/hour) is spent — resets at ${hhmm(reset)}.`;
+        return;
+      }
+      if (!res.ok) throw new Error(`API returned ${res.status}`);
+      const issues = await res.json();
+      let closed = 0, notPlanned = 0, seen = 0;
+      for (const iss of issues) {
+        if (iss.pull_request) continue;      // issues endpoint also lists PRs
+        if (!byN[iss.number]) continue;      // only the top-level tracked items
+        seen++;
+        if (iss.state === "closed") {
+          done.add(iss.number); closed++;
+          if (iss.state_reason === "not_planned") notPlanned++;
+        } else {
+          done.delete(iss.number);
+        }
+      }
+      save();
+      renderAll();
+      const left = remaining != null ? ` · ${remaining} sync${remaining === "1" ? "" : "s"} left this hour` : "";
+      const np = notPlanned ? ` (${notPlanned} closed as not planned — counted as done)` : "";
+      const miss = seen < ITEMS.length ? ` · ${ITEMS.length - seen} not on page 1` : "";
+      msg.className = "sync-msg ok";
+      msg.textContent = `Synced ${hhmm(Date.now())}: ${closed}/${ITEMS.length} tracked issues closed on GitHub${np}${miss}.${left}`;
+    } catch (e) {
+      msg.className = "sync-msg";
+      msg.innerHTML =
+        `Couldn't reach GitHub (${e.message}). Live sync needs network access: open this ` +
+        `<b>repo copy</b> over http(s) — e.g. GitHub Pages or a local server — or as a local file ` +
+        `in a browser that permits it. The shared claude.ai artifact blocks all requests, so sync only ` +
+        `works from the repo's <span class="mono">master_development_plan.html</span>.`;
+    } finally {
+      btn.disabled = false;
+    }
+  }
+  document.getElementById("syncBtn").addEventListener("click", syncFromGitHub);
 
   // ---------- tooltip ----------
   const tip = document.getElementById("tip");
