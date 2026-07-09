@@ -3,20 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:typed_data';
 import 'package:flutter/foundation.dart' show kIsWeb; // Import kIsWeb for platform check
-import 'dart:js_interop';
 import 'dart:convert';
 
 // Import the abstract service and the locator
 import 'package:shinka_scan_app/services/ocr_service.dart'; 
 import 'package:shinka_scan_app/services/ocr_service_locator.dart'; 
-
-// --- JavaScript Interop Declarations ---
-@JS('startWebCameraAndCapture')
-external JSPromise<JSString?> startWebCameraAndCaptureJs(); // Returns a JS Promise that resolves to JSString?
-
-@JS('stopWebCamera')
-external void stopWebCameraJs();
-// --- End JavaScript Interop Declarations ---
+import 'package:shinka_scan_app/services/web_camera_interop.dart';
 
 class OcrScanScreen extends StatefulWidget {
   const OcrScanScreen({super.key});
@@ -89,9 +81,7 @@ Future<void> _pickAndProcessImage(ImageSource source) async {
         setState(() {
           _status = "Requesting camera access (web)...";
         });
-        // Await the JSPromise to get the JSString?, then convert JSString? to String?
-        final JSString? jsBase64Image = await (startWebCameraAndCaptureJs() as JSPromise<JSString?>).toDart;
-        final String? base64Image = jsBase64Image?.toDart;
+        final String? base64Image = await startWebCameraAndCapture();
 
         if (base64Image != null && base64Image.isNotEmpty) {
           // Remove the "data:image/jpeg;base64," prefix if present
@@ -163,7 +153,7 @@ Future<void> _pickAndProcessImage(ImageSource source) async {
     } finally {
       // Ensure any active camera stream from JS interop is stopped if needed
       if (kIsWeb && source == ImageSource.camera) {
-        stopWebCameraJs();
+        stopWebCamera();
       }
     }
   }
