@@ -3,8 +3,9 @@
 Working plan for the full roadmap, July 2026 → February 2027. Live tracking happens on the
 [project board](https://github.com/users/TrexChoong/projects/3) (Roadmap view) and the
 [milestones](https://github.com/TrexChoong/shinkaScanApp/milestones); this document is the narrative map.
-An interactive version with a hoverable timeline lives at
-[`master_development_plan.html`](master_development_plan.html) — open it locally in a browser.
+A read-only visual snapshot with a hoverable timeline lives at
+[`master_development_plan.html`](master_development_plan.html) — open it from the repo copy and it
+pulls live open/closed status and labels from GitHub; the board stays the source of truth.
 
 **Product arc:** scan a card serial (`AE-086`) → look it up in the card database → show market price → match collectors and let them trade directly, cutting out middlemen. Releases progress toward *trading*, not listing.
 
@@ -91,7 +92,7 @@ gantt
 
 ## Choosing the next task
 
-This is a solo project, so the work-in-progress limit is **one**: finish (or explicitly park) whatever is in progress before starting anything new. When you need something new to pick up, run this filter chain from the top and **stop at the first rule that narrows the field to a single issue**. The [interactive plan](master_development_plan.html) has an *Up next* widget that runs this exact ranking live and recomputes it every time you tick an issue off.
+This is a solo project, so the work-in-progress limit is **one**: finish (or explicitly park) whatever is in progress before starting anything new. When you need something new to pick up, run this filter chain from the top and **stop at the first rule that narrows the field to a single issue**. The [visual snapshot](master_development_plan.html) has an *Up next* panel that runs this exact ranking against the live open/closed state it pulls from GitHub.
 
 1. **Only unblocked work is eligible.** An issue qualifies only if it is open *and* every issue in its GitHub "Blocked by" list is closed. This is the one hard gate — everything below only ranks the issues that pass it. On GitHub, that's the issue search `is:open -is:blocked`, or the board's `Status = Ready` column.
 2. **Spikes before build work.** A decision spike (`spike:*`) always outranks build work in the same milestone. #6 gates every M1 issue and #25 gates all of M2 (and shapes M3) — a day spent building while its spike is still open is a day wagered on an architecture that hasn't been chosen yet.
@@ -102,7 +103,7 @@ This is a solo project, so the work-in-progress limit is **one**: finish (or exp
 
 **Inside an issue,** work its sub-issues top to bottom — they are listed in dependency order (e.g. #8's `price_history` schema sub-issue is sequenced early precisely because #17 depends on it). If you get hard-blocked partway through, comment on the issue with exactly where you stopped, move it back to Backlog, and re-run the chain from the top — preferring an issue in the same `area:*` so the context you've loaded stays warm.
 
-**Tracking completion.** Milestone and component percentages are **weighted by estimate (focus-days), not issue count** — closing the 8-day #11 moves the trading bar far more than closing a 2-day issue, which reflects real remaining effort. GitHub's milestone bars count issues (each sub-issue included), which is a fine proxy; the interactive plan's meters use the focus-day weighting and let you check issues off locally to preview progress before it lands on the board.
+**Tracking completion.** Milestone and component percentages are **weighted by estimate (focus-days), not issue count** — closing the 8-day #11 moves the trading bar far more than closing a 2-day issue, which reflects real remaining effort. GitHub's milestone bars count issues (each sub-issue included), which is a fine proxy; the snapshot's meters use the focus-day weighting, deriving "done" from the real closed state pulled from GitHub — nothing to check off by hand.
 
 ---
 

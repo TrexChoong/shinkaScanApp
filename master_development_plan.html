@@ -71,6 +71,14 @@
     font-size: 13.5px; color: var(--muted);
   }
   .meta-row a { color: inherit; }
+  .snap-status {
+    font-size: 13px; color: var(--muted); margin: 10px 0 0;
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  }
+  .snap-status b { color: var(--ink); font-weight: 640; }
+  .snap-status .warn { color: var(--m2); font-weight: 600; }
+  .snap-status .live-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--m3); flex: none; }
+  .snap-status.snap .live-dot { background: var(--muted); }
 
   h2 {
     font-size: 20px; font-weight: 680; letter-spacing: -0.01em;
@@ -107,6 +115,8 @@
     font-size: 12.5px; color: var(--ink-2); padding-right: 14px;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
+  .g-row .lbl a { color: inherit; text-decoration: none; }
+  .g-row .lbl a:hover { text-decoration: underline; }
   .g-row .lbl b { color: var(--ink); font-weight: 650; font-variant-numeric: tabular-nums; }
   .g-row.done .lbl { text-decoration: line-through; opacity: 0.55; }
   .g-row.done .bar { opacity: 0.35; }
@@ -140,47 +150,21 @@
   #tip .t-title { font-weight: 650; }
   #tip .t-meta { opacity: 0.75; font-variant-numeric: tabular-nums; }
 
-  /* ---------- drift reminder toast ---------- */
-  .drift-toast {
-    position: fixed; z-index: 20; right: 20px; bottom: 20px;
-    max-width: 400px; width: calc(100% - 40px);
-    background: var(--surface); color: var(--ink-2);
-    border: 1px solid var(--ring); border-left: 3px solid var(--accent);
-    border-radius: 10px; padding: 14px 16px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.22);
-    font-size: 13px; line-height: 1.5; display: none;
-  }
-  .drift-toast.show { display: block; }
-  @media (prefers-reduced-motion: no-preference) {
-    .drift-toast.show { animation: drift-in 0.2s ease-out; }
-  }
-  @keyframes drift-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
-  .drift-toast .dt-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 6px; }
-  .drift-toast .dt-title { font-size: 11.5px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink); }
-  .drift-toast .dt-close { background: none; border: none; color: var(--muted); font-size: 19px; line-height: 1; cursor: pointer; padding: 0 2px; }
-  .drift-toast .dt-close:hover, .drift-toast .dt-close:focus-visible { color: var(--ink); }
-  .drift-toast b { color: var(--ink); font-weight: 640; }
-  .drift-toast ol { margin: 6px 0 0; padding-left: 18px; }
-  .drift-toast li { margin: 4px 0; }
-  .drift-toast a { color: var(--accent); font-weight: 600; }
-
-  /* ---------- task picker widget ---------- */
+  /* ---------- panels ---------- */
   .picker-grid { display: grid; grid-template-columns: minmax(320px, 5fr) minmax(300px, 4fr); gap: 20px; align-items: start; }
   @media (max-width: 860px) { .picker-grid { grid-template-columns: 1fr; } }
   .panel-title {
     display: flex; align-items: baseline; justify-content: space-between; gap: 10px;
-    font-size: 14px; font-weight: 680; margin: 0 0 4px;
+    font-size: 14px; font-weight: 680; margin: 0 0 8px;
   }
   .panel-title .hint { font-size: 12px; font-weight: 500; color: var(--muted); }
-  .next-row {
-    display: flex; align-items: flex-start; gap: 10px;
-    padding: 9px 2px; border-bottom: 1px solid var(--hairline);
-  }
+  .next-row { padding: 9px 2px; border-bottom: 1px solid var(--hairline); }
   .next-row:last-child { border-bottom: none; }
-  .next-row input[type="checkbox"] { margin-top: 3px; accent-color: var(--accent); width: 15px; height: 15px; flex: none; cursor: pointer; }
-  .next-row .body { min-width: 0; }
   .next-row .t { font-size: 13.5px; font-weight: 600; color: var(--ink); }
   .next-row .t .num { font-variant-numeric: tabular-nums; }
+  .next-row .t a { color: inherit; text-decoration: none; }
+  .next-row .t a:hover { text-decoration: underline; }
+  .next-row .lead { color: var(--accent); font-weight: 650; font-size: 12px; }
   .next-row .why { font-size: 12px; color: var(--muted); margin-top: 1px; }
   .next-row .why .pr { font-weight: 650; color: var(--ink-2); }
   .next-row .chip { width: 9px; height: 9px; border-radius: 2.5px; display: inline-block; margin-right: 6px; transform: translateY(0.5px); }
@@ -194,40 +178,38 @@
   .meter .m-val { font-size: 12px; color: var(--muted); text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
   .meter-block + .meter-block { margin-top: 18px; }
 
-  .checklist { columns: 2; column-gap: 28px; margin-top: 6px; }
-  @media (max-width: 700px) { .checklist { columns: 1; } }
-  .cl-group { break-inside: avoid; margin-bottom: 14px; }
-  .cl-head { display: flex; align-items: center; gap: 7px; font-size: 11.5px; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: var(--ink-2); margin-bottom: 4px; }
-  .cl-row { display: flex; align-items: flex-start; gap: 8px; padding: 3px 0; font-size: 13px; color: var(--ink-2); }
-  .cl-row input[type="checkbox"] { margin-top: 3px; accent-color: var(--accent); flex: none; cursor: pointer; }
-  .cl-row label { cursor: pointer; }
-  .cl-row b { color: var(--ink); font-weight: 640; font-variant-numeric: tabular-nums; }
-  .cl-row.done label { text-decoration: line-through; opacity: 0.55; }
-  .reset-btn {
-    font: inherit; font-size: 12px; color: var(--muted);
-    background: none; border: 1px solid var(--hairline); border-radius: 6px;
-    padding: 3px 10px; cursor: pointer;
+  /* ---------- read-only issue list ---------- */
+  .issue-list { columns: 2; column-gap: 28px; margin-top: 6px; }
+  @media (max-width: 720px) { .issue-list { columns: 1; } }
+  .il-group { break-inside: avoid; margin-bottom: 14px; }
+  .il-head { display: flex; align-items: center; gap: 7px; font-size: 11.5px; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: var(--ink-2); margin-bottom: 5px; }
+  .il-row { display: flex; align-items: center; gap: 8px; padding: 3.5px 0; font-size: 13px; color: var(--ink-2); flex-wrap: wrap; }
+  .il-row .txt { color: var(--ink-2); text-decoration: none; }
+  .il-row .txt:hover { text-decoration: underline; }
+  .il-row .txt b { color: var(--ink); font-weight: 640; font-variant-numeric: tabular-nums; }
+  .il-row.done .txt { text-decoration: line-through; }
+  .il-row.done .txt b { color: var(--ink-2); }
+  .status-pill {
+    font-size: 10px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase;
+    padding: 1.5px 7px; border-radius: 20px; flex: none;
   }
-  .reset-btn:hover, .reset-btn:focus-visible { color: var(--ink); border-color: var(--baseline); }
-  .btn-group { display: inline-flex; gap: 8px; }
-  .sync-btn {
-    font: inherit; font-size: 12px; color: var(--accent);
-    background: none; border: 1px solid var(--accent); border-radius: 6px;
-    padding: 3px 10px; cursor: pointer;
+  .status-pill.done { background: color-mix(in srgb, var(--m3) 20%, transparent); color: var(--m3); }
+  .status-pill.open { background: var(--hairline); color: var(--muted); }
+  .lbl-chip {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 10px; color: var(--ink-2);
+    border: 1px solid var(--ring); border-radius: 10px; padding: 0 6px; white-space: nowrap;
   }
-  .sync-btn:hover, .sync-btn:focus-visible { background: color-mix(in srgb, var(--accent) 12%, transparent); }
-  .sync-btn:disabled { opacity: 0.5; cursor: default; }
-  .sync-msg { font-size: 12px; color: var(--muted); margin: 8px 0 0; min-height: 1em; line-height: 1.45; }
-  .sync-msg.ok { color: var(--m3); }
-  .sync-msg.warn { color: var(--ink-2); }
-  .today-readout { font-size: 13px; color: var(--ink-2); margin: 12px 0 0; font-variant-numeric: tabular-nums; }
-  .today-readout b { color: var(--ink); font-weight: 640; }
-  .today-readout .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--today); margin-right: 7px; transform: translateY(0.5px); }
+  .lbl-chip .ldot { width: 7px; height: 7px; border-radius: 50%; flex: none; }
 
   /* ---------- choose procedure ---------- */
   ol.chain { margin: 8px 0 0; padding-left: 22px; color: var(--ink-2); font-size: 14.5px; max-width: 78ch; }
   ol.chain li { margin: 7px 0; }
   ol.chain b { color: var(--ink); }
+
+  .today-readout { font-size: 13px; color: var(--ink-2); margin: 12px 0 0; font-variant-numeric: tabular-nums; }
+  .today-readout b { color: var(--ink); font-weight: 640; }
+  .today-readout .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--today); margin-right: 7px; transform: translateY(0.5px); }
 
   /* ---------- tables ---------- */
   .tbl-scroll { overflow-x: auto; }
@@ -283,9 +265,10 @@
     <span><a href="https://github.com/users/TrexChoong/projects/3">Project board</a></span>
     <span><a href="https://github.com/TrexChoong/shinkaScanApp/milestones">Milestones</a></span>
   </div>
+  <p class="snap-status snap" id="snapStatus"><span class="live-dot"></span>Loading status…</p>
 
   <h2>Timeline</h2>
-  <p class="sub">Solid bars are build work; outlined bars are decision spikes that gate everything after them. Dashed lines mark milestone due dates — each chain deliberately lands about a week early, and that buffer is schedule insurance, not free capacity. Hover any bar for details; issues ticked off below show as struck through here.</p>
+  <p class="sub">Solid bars are build work; outlined bars are decision spikes that gate everything after them. Dashed lines mark milestone due dates — each chain deliberately lands about a week early, and that buffer is schedule insurance, not free capacity. Closed issues show struck through; hover any bar for details, click a label to open the issue.</p>
   <div class="card">
     <div class="legend" id="legend"></div>
     <div class="gantt-scroll"><div class="gantt" id="gantt"></div></div>
@@ -295,7 +278,7 @@
   <h2>Choosing the next task</h2>
   <p class="sub">Solo project, so the WIP limit is one: finish what's in progress before starting anything new. When you need a task, run this filter chain top to bottom — stop at the first rule that leaves a single issue.</p>
   <ol class="chain">
-    <li><b>Only unblocked work is eligible.</b> Open, and every "Blocked by" issue in its GitHub sidebar closed. The <i>Up next</i> list below computes this live from the dependency graph.</li>
+    <li><b>Only unblocked work is eligible.</b> Open, and every "Blocked by" issue in its GitHub sidebar closed. The <i>Up next</i> list below computes this from the dependency graph and live open/closed state.</li>
     <li><b>Spikes before build work.</b> #6 gates every M1 issue; #25 gates all of M2 and shapes M3. A day of building while a spike waits is a day bet on an undecided architecture.</li>
     <li><b>Current milestone first.</b> Don't reach forward unless the open milestone has nothing eligible — the one designed exception is #25, whose window intentionally opens during M1's buffer week.</li>
     <li><b>Highest priority:</b> P0 → P1 → P2.</li>
@@ -310,21 +293,20 @@
       <div id="upnext"></div>
     </div>
     <div class="card">
-      <p class="panel-title">Progress <span class="btn-group"><button class="sync-btn" id="syncBtn" type="button">Sync from GitHub</button><button class="reset-btn" id="reset" type="button">Reset checks</button></span></p>
-      <p class="sync-msg" id="syncMsg"></p>
+      <p class="panel-title">Progress <span class="hint">weighted by focus-days</span></p>
       <div class="meter-block">
-        <p class="cl-head">By milestone</p>
+        <p class="il-head">By milestone</p>
         <div id="meters-ms"></div>
       </div>
       <div class="meter-block">
-        <p class="cl-head">By component</p>
+        <p class="il-head">By component</p>
         <div id="meters-area"></div>
       </div>
     </div>
   </div>
   <div class="card" style="margin-top:20px">
-    <p class="panel-title">All issues <span class="hint">local preview only — each toggle shows how to sync it to GitHub</span></p>
-    <div class="checklist" id="checklist"></div>
+    <p class="panel-title">All issues <span class="hint">read-only · status &amp; labels pulled from GitHub</span></p>
+    <div class="issue-list" id="issueList"></div>
   </div>
 
   <h2>Components</h2>
@@ -427,7 +409,7 @@
     <div class="card">
       <p class="ms-title" style="font-size:14px">Picking work</p>
       <ul class="rules">
-        <li><b>Next task</b> = the filter chain under "Choosing the next task" above; the Up next widget runs it for you.</li>
+        <li><b>Next task</b> = the filter chain under "Choosing the next task" above; the Up next panel runs it for you.</li>
         <li><b>Tasks ≥ 3 focus-days</b> carry native sub-issues; parent cards show progress on the board.</li>
         <li><b>Ordering</b> is encoded as native GitHub "blocked by" relations — GitHub warns if a blocked issue is closed early.</li>
       </ul>
@@ -435,16 +417,15 @@
     <div class="card">
       <p class="ms-title" style="font-size:14px">Keeping the plan honest</p>
       <ul class="rules">
-        <li><b>Labels:</b> type (feature / bug / spike:*) + component (area:*). Priority, size, and dates live on the board, not in labels.</li>
+        <li><b>This page is a read-only snapshot.</b> Status is pulled live from GitHub when opened from the repo copy; the board is the source of truth.</li>
+        <li><b>Structure</b> (dates, dependencies, new issues) is baked at generation time — regenerate the plan when it changes; the status line flags new issues since the snapshot.</li>
         <li><b>Slipping?</b> Use the milestone buffer first, then the named pressure valves. Never silently move a due date — re-plan the chain.</li>
-        <li><b>After M3:</b> growing trading liquidity (users, community, localization) is product work outside this plan.</li>
       </ul>
     </div>
   </div>
 </div>
 
 <div id="tip"></div>
-<div id="drift" class="drift-toast" role="status" aria-live="polite"></div>
 
 <script>
 (function () {
@@ -490,6 +471,17 @@
   const byN = {};
   ITEMS.forEach(it => { byN[it[0]] = it; });
 
+  // ---- snapshot metadata (regenerate these when rebuilding ITEMS) ----
+  const REPO_URL = "https://github.com/TrexChoong/shinkaScanApp";
+  const SNAPSHOT_DATE = "2026-07-08";
+  const SNAPSHOT_MAX_ISSUE = 90;          // highest issue number at snapshot time
+  const CLOSED = new Set([2]);            // issues closed at snapshot time (baked)
+
+  // done = the set of closed (completed) tracked issues. Baked initially; the
+  // optional live refresh below overwrites it from GitHub where the network allows.
+  let done = new Set(CLOSED);
+  const details = new Map();              // n -> { state, labels[], updated } from live fetch
+
   // transitive dependents (how many issues each one unblocks)
   const dependents = {};
   ITEMS.forEach(it => { dependents[it[0]] = new Set(); });
@@ -500,18 +492,13 @@
   }
   ITEMS.forEach(it => collect(it[0], dependents[it[0]]));
 
-  // done-state, persisted locally
-  const KEY = "shinkascan-plan-done";
-  let done;
-  try { done = new Set(JSON.parse(localStorage.getItem(KEY) || "[]")); }
-  catch (e) { done = new Set(); }
-  const save = () => { try { localStorage.setItem(KEY, JSON.stringify([...done])); } catch (e) {} };
-
   const T0 = Date.parse("2026-07-01");
   const T1 = Date.parse("2027-03-01");
   const pct = d => ((Date.parse(d) - T0) / (T1 - T0)) * 100;
   const fmt = d => new Date(d + "T00:00:00").toLocaleDateString(undefined, { month: "short", day: "numeric" });
   const fmtY = d => new Date(d + "T00:00:00").toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+  const hhmm = ts => new Date(ts).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
+  const issueUrl = n => `${REPO_URL}/issues/${n}`;
   // Real current date (local, no timezone drift), used for the "today" marker/readout.
   const _now = new Date();
   const TODAY_ISO = `${_now.getFullYear()}-${String(_now.getMonth() + 1).padStart(2, "0")}-${String(_now.getDate()).padStart(2, "0")}`;
@@ -542,9 +529,9 @@
       const m = MS[key];
       const left = pct(s), width = Math.max(pct(e) - left, 0.6);
       html += `<div class="g-row${done.has(n) ? " done" : ""}">
-        <div class="lbl" title="#${n} ${title}"><b>#${n}</b> ${title}</div>
+        <div class="lbl" title="#${n} ${title}"><a href="${issueUrl(n)}" target="_blank" rel="noopener"><b>#${n}</b> ${title}</a></div>
         <div class="plot"><div class="bar${spike ? " spike" : ""}" style="left:${left}%;width:${width}%;background:var(${m.var});border-color:var(${m.var})"
-          data-tip="<span class='t-title'>#${n} ${title}${spike ? " (spike)" : ""}</span><br><span class='t-meta'>${fmt(s)} → ${fmt(e)} · ~${est} focus-day${est > 1 ? "s" : ""} · ${m.name}${done.has(n) ? " · ✓ done" : ""}</span>"></div></div>
+          data-tip="<span class='t-title'>#${n} ${title}${spike ? " (spike)" : ""}</span><br><span class='t-meta'>${fmt(s)} → ${fmt(e)} · ~${est} focus-day${est > 1 ? "s" : ""} · ${m.name}${done.has(n) ? " · ✓ closed" : ""}</span>"></div></div>
       </div>`;
     }
     g.innerHTML = html;
@@ -561,7 +548,7 @@
     g.appendChild(overlay);
   }
 
-  // ---------- task picker ----------
+  // ---------- up next (ranking) ----------
   const PRIO = ["P0", "P1", "P2"];
   function eligible() {
     return ITEMS.filter(it => !done.has(it[0]) && it[8].every(d => done.has(d)));
@@ -573,7 +560,7 @@
     return null;
   }
   function rankKey(it) {
-    const [n, , s, , key, est, prio, , , spike] = [it[0], it[1], it[2], it[3], it[4], it[5], it[6], it[7], it[8], it[9]];
+    const spike = it[9];
     const cur = currentMs();
     return [
       spike ? 0 : 1,                                   // spikes first
@@ -593,7 +580,10 @@
     const el = document.getElementById("upnext");
     const list = eligible().sort(cmp).slice(0, 7);
     if (!list.length) {
-      el.innerHTML = `<p class="all-clear">Everything is checked off — the plan is complete. 🎉</p>`;
+      const allClosed = ITEMS.every(it => done.has(it[0]));
+      el.innerHTML = `<p class="all-clear">${allClosed
+        ? "All tracked issues are closed. 🎉"
+        : "Nothing unblocked right now — every open issue is waiting on a blocker."}</p>`;
       return;
     }
     el.innerHTML = list.map((it, i) => {
@@ -607,14 +597,13 @@
         `~${est}d`,
       ].filter(Boolean).join(" · ");
       return `<div class="next-row">
-        <input type="checkbox" id="nx${n}" data-n="${n}" aria-label="Mark #${n} done">
-        <div class="body">
-          <div class="t"><span class="chip" style="background:var(${MS[key].var})"></span><span class="num">#${n}</span> ${title}${i === 0 ? " ←" : ""}</div>
-          <div class="why">${why}</div>
-        </div>
+        <div class="t"><span class="chip" style="background:var(${MS[key].var})"></span><a href="${issueUrl(n)}" target="_blank" rel="noopener"><span class="num">#${n}</span> ${title}</a>${i === 0 ? ' <span class="lead">← start here</span>' : ''}</div>
+        <div class="why">${why}</div>
       </div>`;
     }).join("");
   }
+
+  // ---------- progress meters ----------
   function meterRow(label, doneEst, totEst, hueVar) {
     const p = totEst ? Math.round((doneEst / totEst) * 100) : 0;
     return `<div class="meter">
@@ -641,21 +630,31 @@
     }
     document.getElementById("meters-area").innerHTML = ar;
   }
-  function renderChecklist() {
-    const el = document.getElementById("checklist");
+
+  // ---------- read-only issue list (status + details from GitHub) ----------
+  function renderIssueList() {
+    const el = document.getElementById("issueList");
     el.innerHTML = MS_ORDER.map(key => {
       const m = MS[key];
       const rows = ITEMS.filter(it => it[4] === key).map(it => {
         const n = it[0];
-        return `<div class="cl-row${done.has(n) ? " done" : ""}">
-          <input type="checkbox" id="cl${n}" data-n="${n}" ${done.has(n) ? "checked" : ""}>
-          <label for="cl${n}"><b>#${n}</b> ${it[1]}</label>
+        const isDone = done.has(n);
+        const pill = isDone ? `<span class="status-pill done">Done</span>` : `<span class="status-pill open">Open</span>`;
+        const det = details.get(n);
+        const labs = det ? det.labels.filter(l => l.name !== "feature") : [];
+        const shown = labs.slice(0, 3).map(l =>
+          `<span class="lbl-chip"><span class="ldot" style="background:#${l.color || "888888"}"></span>${l.name.replace(/^area:/, "")}</span>`
+        ).join("");
+        const more = labs.length > 3 ? `<span class="lbl-chip">+${labs.length - 3}</span>` : "";
+        return `<div class="il-row${isDone ? " done" : ""}">
+          ${pill}<a class="txt" href="${issueUrl(n)}" target="_blank" rel="noopener"><b>#${n}</b> ${it[1]}</a>${shown}${more}
         </div>`;
       }).join("");
-      return `<div class="cl-group"><p class="cl-head"><span class="chip" style="background:var(${m.var})"></span>${m.name}</p>${rows}</div>`;
+      return `<div class="il-group"><p class="il-head"><span class="chip" style="background:var(${m.var})"></span>${m.name}</p>${rows}</div>`;
     }).join("");
   }
-  // Where are we against the plan right now?
+
+  // ---------- today readout ----------
   function renderTodayReadout() {
     const el = document.getElementById("todayReadout");
     const t = Date.parse(TODAY_ISO);
@@ -673,81 +672,21 @@
     el.innerHTML = `<span class="dot"></span>Today <b>${fmtY(TODAY_ISO)}</b> · in <b>${MS[active].name}</b> — ${days} day${days === 1 ? "" : "s"} to its due date (${fmt(MS[active].due)}).`;
   }
 
-  function renderAll() { renderGantt(); renderUpNext(); renderMeters(); renderChecklist(); renderTodayReadout(); }
+  function renderAll() { renderGantt(); renderUpNext(); renderMeters(); renderIssueList(); renderTodayReadout(); }
   renderAll();
 
-  // ---------- drift reminder: keep GitHub as the source of truth ----------
-  // Ticking a box here only changes this local preview. This page reads a
-  // SNAPSHOT (the ITEMS array), so every local change is a chance to drift from
-  // the live board — so on every toggle, say exactly what to do about it.
-  const REPO_URL = "https://github.com/TrexChoong/shinkaScanApp";
-  // Highest issue number that existed when this ITEMS snapshot was generated.
-  // Anything above it was created since — a signal the snapshot is stale.
-  // Bump this whenever ITEMS is regenerated.
-  const SNAPSHOT_MAX_ISSUE = 90;
-  const driftEl = document.getElementById("drift");
-  let driftTimer = null;
-  function hideDrift() {
-    driftEl.classList.remove("show");
-    if (driftTimer) { clearTimeout(driftTimer); driftTimer = null; }
+  // ---------- optional live refresh (read-only) ----------
+  // Best-effort: pull real open/closed state + labels from the PUBLIC repo in one
+  // request. Where the network is blocked (the shared claude.ai artifact) it keeps
+  // the baked snapshot and says so. No writes, no local state — just a fresher photo.
+  function setStatus(html, isLive) {
+    const el = document.getElementById("snapStatus");
+    el.className = "snap-status" + (isLive ? "" : " snap");
+    el.innerHTML = `<span class="live-dot"></span>${html}`;
   }
-  function showDrift(html) {
-    driftEl.innerHTML =
-      `<div class="dt-head"><span class="dt-title">Preview only — sync to GitHub</span>` +
-      `<button class="dt-close" type="button" aria-label="Dismiss">&times;</button></div>` + html;
-    driftEl.classList.add("show");
-    driftEl.querySelector(".dt-close").addEventListener("click", hideDrift);
-    if (driftTimer) clearTimeout(driftTimer);
-    driftTimer = setTimeout(hideDrift, 14000);
-  }
-  function driftForToggle(n, checked) {
-    const title = (byN[n] && byN[n][1]) || "";
-    const url = `${REPO_URL}/issues/${n}`;
-    if (checked) {
-      showDrift(
-        `You checked <b>#${n} ${title}</b> here — this lives in your browser and does <b>not</b> close the issue. To make it real:` +
-        `<ol><li><a href="${url}" target="_blank" rel="noopener">Close #${n} on GitHub</a> — the board automation then flips its dependents to Ready.</li>` +
-        `<li>Changed scope — new issue, dependency, estimate, or date? Update this file's <b>ITEMS</b> list too, or this widget drifts from the board.</li></ol>`
-      );
-    } else {
-      showDrift(
-        `You unchecked <b>#${n} ${title}</b> here. If it's closed on GitHub, ` +
-        `<a href="${url}" target="_blank" rel="noopener">reopen #${n}</a> so the board and this preview agree.`
-      );
-    }
-  }
-
-  document.addEventListener("change", ev => {
-    const n = ev.target && ev.target.dataset ? Number(ev.target.dataset.n) : NaN;
-    if (!n) return;
-    if (ev.target.checked) done.add(n); else done.delete(n);
-    save();
-    renderAll();
-    driftForToggle(n, ev.target.checked);
-  });
-  document.getElementById("reset").addEventListener("click", () => {
-    done = new Set(); save(); renderAll();
-    showDrift(
-      `Cleared all local checks. This only resets the preview — it changes nothing on GitHub. ` +
-      `The live board reflects whatever issues are actually open or closed there.`
-    );
-  });
-
-  // ---------- live sync: read real open/closed state from the public repo ----------
-  // Kills state-drift: a closed issue on GitHub becomes a checked box here.
-  // Works only where network is allowed (the repo file served over http(s) or
-  // opened locally). The shared claude.ai artifact blocks all fetches by CSP, so
-  // this degrades to a clear message there.
-  async function syncFromGitHub() {
-    const btn = document.getElementById("syncBtn");
-    const msg = document.getElementById("syncMsg");
-    btn.disabled = true;
-    msg.className = "sync-msg";
-    msg.textContent = "Syncing from GitHub…";
-    const hhmm = ts => new Date(ts).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
+  async function refreshFromGitHub() {
+    setStatus(`Checking GitHub for live status…`, false);
     try {
-      // One request, sorted ascending so the tracked top-level issues (#1–#25)
-      // always fall on page 1 — they're the first issues ever created.
       const api = REPO_URL.replace("github.com", "api.github.com/repos");
       const res = await fetch(`${api}/issues?state=all&sort=created&direction=asc&per_page=100`, {
         headers: { "Accept": "application/vnd.github+json" },
@@ -755,50 +694,37 @@
       const remaining = res.headers.get("x-ratelimit-remaining");
       if (res.status === 403 && remaining === "0") {
         const reset = Number(res.headers.get("x-ratelimit-reset")) * 1000;
-        msg.className = "sync-msg";
-        msg.textContent = `GitHub's unauthenticated rate limit (60/hour) is spent — resets at ${hhmm(reset)}.`;
+        setStatus(`Snapshot as of <b>${fmtY(SNAPSHOT_DATE)}</b> — GitHub rate limit spent; live refresh resets at ${hhmm(reset)}.`, false);
         return;
       }
-      if (!res.ok) throw new Error(`API returned ${res.status}`);
+      if (!res.ok) throw new Error(String(res.status));
       const issues = await res.json();
-      let closed = 0, notPlanned = 0, seen = 0, fresh = 0;
+      const live = new Set();
+      let fresh = 0;
       for (const iss of issues) {
-        if (iss.pull_request) continue;      // issues endpoint also lists PRs
-        if (iss.number > SNAPSHOT_MAX_ISSUE) fresh++;  // created since this snapshot
-        if (!byN[iss.number]) continue;      // only the top-level tracked items
-        seen++;
-        if (iss.state === "closed") {
-          done.add(iss.number); closed++;
-          if (iss.state_reason === "not_planned") notPlanned++;
-        } else {
-          done.delete(iss.number);
-        }
+        if (iss.pull_request) continue;
+        if (iss.number > SNAPSHOT_MAX_ISSUE) fresh++;
+        if (!byN[iss.number]) continue;
+        if (iss.state === "closed") live.add(iss.number);
+        details.set(iss.number, {
+          state: iss.state,
+          labels: (iss.labels || []).map(l => ({ name: l.name, color: l.color })),
+          updated: iss.updated_at,
+        });
       }
-      save();
+      done = live;
       renderAll();
-      const left = remaining != null ? ` · ${remaining} sync${remaining === "1" ? "" : "s"} left this hour` : "";
-      const np = notPlanned ? ` (${notPlanned} closed as not planned — counted as done)` : "";
-      const miss = seen < ITEMS.length ? ` · ${ITEMS.length - seen} not on page 1` : "";
-      msg.className = "sync-msg ok";
-      msg.textContent = `Synced ${hhmm(Date.now())}: ${closed}/${ITEMS.length} tracked issues closed on GitHub${np}${miss}.${left}`;
-      if (fresh) {
-        // State sync can't render new issues (no dates/deps/estimates) — flag them.
-        msg.className = "sync-msg warn";
-        msg.textContent += `  ⚠ ${fresh} new issue${fresh === 1 ? "" : "s"} on GitHub since this snapshot` +
-          `${issues.length >= 100 ? "+" : ""} — not shown here; regenerate the plan to include ${fresh === 1 ? "it" : "them"}.`;
-      }
+      const closed = done.size;
+      const warn = fresh
+        ? ` · <span class="warn">⚠ ${fresh} new issue${fresh === 1 ? "" : "s"} since snapshot${issues.length >= 100 ? "+" : ""} — regenerate the plan</span>`
+        : "";
+      const rl = remaining != null ? ` · ${remaining} refresh${remaining === "1" ? "" : "es"} left this hour` : "";
+      setStatus(`Live as of <b>${hhmm(Date.now())}</b> · ${closed}/${ITEMS.length} tracked issues closed${rl}${warn}`, true);
     } catch (e) {
-      msg.className = "sync-msg";
-      msg.innerHTML =
-        `Couldn't reach GitHub (${e.message}). Live sync needs network access: open this ` +
-        `<b>repo copy</b> over http(s) — e.g. GitHub Pages or a local server — or as a local file ` +
-        `in a browser that permits it. The shared claude.ai artifact blocks all requests, so sync only ` +
-        `works from the repo's <span class="mono">master_development_plan.html</span>.`;
-    } finally {
-      btn.disabled = false;
+      setStatus(`Snapshot as of <b>${fmtY(SNAPSHOT_DATE)}</b> — live status needs the repo copy; this shared view can't reach GitHub.`, false);
     }
   }
-  document.getElementById("syncBtn").addEventListener("click", syncFromGitHub);
+  refreshFromGitHub();
 
   // ---------- tooltip ----------
   const tip = document.getElementById("tip");
