@@ -1,6 +1,14 @@
 import '../models/TCGCard.dart';
 import 'card_csv_loader.dart';
 import 'database.dart';
+import 'dart:math';
+
+class FuzzySearchResult {
+  final TCGCard? exactMatch;
+  final List<TCGCard> suggestions;
+
+  FuzzySearchResult({this.exactMatch, this.suggestions = const []});
+}
 
 class CardRepository {
   CardRepository(this._db);
@@ -21,14 +29,42 @@ class CardRepository {
     return rows.map(_toTcgCard).toList();
   }
 
-  TCGCard _toTcgCard(CardRow row) => TCGCard(
+  Future<bool> addToCollection(TCGCard card) async {
+    return await _db.addCardToUserCollection(int.parse(card.id));
+  }
+
+  Future<void> removeFromCollection(TCGCard card) async {
+    await _db.removeCardFromUserCollection(int.parse(card.id));
+  }
+
+  Stream<List<TCGCard>> watchUserCollection() {
+    return _db.watchUserCollectionCards().map((rows) {
+      return rows.map(_toTcgCard).toList();
+    });
+  }
+
+  Future<TCGCard?> getByCardno(String expansion, String cardno) async {
+    final allCardsList = await getAllCards();
+    try {
+      return allCardsList.firstWhere((c) => c.expansion == expansion && c.cardno == cardno);
+    } catch(e) {
+      return null;
+    }
+  }
+
+  TCGCard _toTcgCard(CardRow row) {
+    final setName = (row.japaneseSetName != null && row.japaneseSetName!.isNotEmpty)
+        ? row.japaneseSetName!
+        : row.expansion;
+        
+    return TCGCard(
         id: row.id.toString(),
         cardno: row.cardno,
         expansion: row.expansion,
         name: row.japaneseName ?? row.cardno,
         imageUrl: row.imageUrl ?? '',
         detailPageUrl: row.detailPageUrl ?? '',
-        set: row.japaneseSetName ?? '',
+        set: setName,
         rarity: row.rarity ?? '',
         cardClass: row.cardClass ?? '',
         cardType: row.cardType ?? '',
@@ -38,7 +74,61 @@ class CardRepository {
         defense: row.defense,
         cardText: row.cardText,
         illustrator: row.illustrator,
-      );
+    );
+  }
+  Future<FuzzySearchResult> searchCardsByFuzzyId(String ocrId) async {
+    final allCardsList = await getAllCards();
+    
+    String cleanStr(String s) => s.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '').toUpperCase();
+    
+    final cleanOcrId = cleanStr(ocrId);
+    
+    TCGCard? exactMatch;
+    List<TCGCard> distance1 = [];
+    List<TCGCard> distance2 = [];
+
+    for (var card in allCardsList) {
+      final cleanCardNo = cleanStr(card.cardno);
+      final dist = _levenshteinDistance(cleanOcrId, cleanCardNo);
+      
+      if (dist == 0) {
+        exactMatch = card; // we found an exact match
+      } else if (dist == 1) {
+        distance1.add(card);
+      } else if (dist == 2) {
+        distance2.add(card);
+      }
+    }
+    
+    // If no exact match but we have close suggestions
+    List<TCGCard> suggestions = [...distance1, ...distance2];
+    
+    return FuzzySearchResult(
+      exactMatch: exactMatch,
+      suggestions: suggestions,
+    );
+  }
+
+  int _levenshteinDistance(String s, String t) {
+    if (s == t) return 0;
+    if (s.isEmpty) return t.length;
+    if (t.isEmpty) return s.length;
+
+    List<int> v0 = List<int>.generate(t.length + 1, (i) => i);
+    List<int> v1 = List<int>.filled(t.length + 1, 0);
+
+    for (int i = 0; i < s.length; i++) {
+      v1[0] = i + 1;
+      for (int j = 0; j < t.length; j++) {
+        int cost = (s[i] == t[j]) ? 0 : 1;
+        v1[j + 1] = min(v1[j] + 1, min(v0[j + 1] + 1, v0[j] + cost));
+      }
+      for (int j = 0; j <= t.length; j++) {
+        v0[j] = v1[j];
+      }
+    }
+    return v1[t.length];
+  }
 }
 
 final AppDatabase appDatabase = AppDatabase();

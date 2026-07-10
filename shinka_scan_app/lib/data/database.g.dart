@@ -898,15 +898,278 @@ class CardsCompanion extends UpdateCompanion<CardRow> {
   }
 }
 
+class $UserCollectionsTable extends UserCollections
+    with TableInfo<$UserCollectionsTable, UserCollectionRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $UserCollectionsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+      'id', aliasedName, false,
+      hasAutoIncrement: true,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
+  static const VerificationMeta _cardIdMeta = const VerificationMeta('cardId');
+  @override
+  late final GeneratedColumn<int> cardId = GeneratedColumn<int>(
+      'card_id', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _quantityMeta =
+      const VerificationMeta('quantity');
+  @override
+  late final GeneratedColumn<int> quantity = GeneratedColumn<int>(
+      'quantity', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(1));
+  static const VerificationMeta _addedAtMeta =
+      const VerificationMeta('addedAt');
+  @override
+  late final GeneratedColumn<DateTime> addedAt = GeneratedColumn<DateTime>(
+      'added_at', aliasedName, true,
+      type: DriftSqlType.dateTime, requiredDuringInsert: false);
+  @override
+  List<GeneratedColumn> get $columns => [id, cardId, quantity, addedAt];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'user_collections';
+  @override
+  VerificationContext validateIntegrity(Insertable<UserCollectionRow> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('card_id')) {
+      context.handle(_cardIdMeta,
+          cardId.isAcceptableOrUnknown(data['card_id']!, _cardIdMeta));
+    } else if (isInserting) {
+      context.missing(_cardIdMeta);
+    }
+    if (data.containsKey('quantity')) {
+      context.handle(_quantityMeta,
+          quantity.isAcceptableOrUnknown(data['quantity']!, _quantityMeta));
+    }
+    if (data.containsKey('added_at')) {
+      context.handle(_addedAtMeta,
+          addedAt.isAcceptableOrUnknown(data['added_at']!, _addedAtMeta));
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  UserCollectionRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return UserCollectionRow(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
+      cardId: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}card_id'])!,
+      quantity: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}quantity'])!,
+      addedAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}added_at']),
+    );
+  }
+
+  @override
+  $UserCollectionsTable createAlias(String alias) {
+    return $UserCollectionsTable(attachedDatabase, alias);
+  }
+}
+
+class UserCollectionRow extends DataClass
+    implements Insertable<UserCollectionRow> {
+  final int id;
+  final int cardId;
+  final int quantity;
+  final DateTime? addedAt;
+  const UserCollectionRow(
+      {required this.id,
+      required this.cardId,
+      required this.quantity,
+      this.addedAt});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['card_id'] = Variable<int>(cardId);
+    map['quantity'] = Variable<int>(quantity);
+    if (!nullToAbsent || addedAt != null) {
+      map['added_at'] = Variable<DateTime>(addedAt);
+    }
+    return map;
+  }
+
+  UserCollectionsCompanion toCompanion(bool nullToAbsent) {
+    return UserCollectionsCompanion(
+      id: Value(id),
+      cardId: Value(cardId),
+      quantity: Value(quantity),
+      addedAt: addedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(addedAt),
+    );
+  }
+
+  factory UserCollectionRow.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return UserCollectionRow(
+      id: serializer.fromJson<int>(json['id']),
+      cardId: serializer.fromJson<int>(json['cardId']),
+      quantity: serializer.fromJson<int>(json['quantity']),
+      addedAt: serializer.fromJson<DateTime?>(json['addedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'cardId': serializer.toJson<int>(cardId),
+      'quantity': serializer.toJson<int>(quantity),
+      'addedAt': serializer.toJson<DateTime?>(addedAt),
+    };
+  }
+
+  UserCollectionRow copyWith(
+          {int? id,
+          int? cardId,
+          int? quantity,
+          Value<DateTime?> addedAt = const Value.absent()}) =>
+      UserCollectionRow(
+        id: id ?? this.id,
+        cardId: cardId ?? this.cardId,
+        quantity: quantity ?? this.quantity,
+        addedAt: addedAt.present ? addedAt.value : this.addedAt,
+      );
+  UserCollectionRow copyWithCompanion(UserCollectionsCompanion data) {
+    return UserCollectionRow(
+      id: data.id.present ? data.id.value : this.id,
+      cardId: data.cardId.present ? data.cardId.value : this.cardId,
+      quantity: data.quantity.present ? data.quantity.value : this.quantity,
+      addedAt: data.addedAt.present ? data.addedAt.value : this.addedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('UserCollectionRow(')
+          ..write('id: $id, ')
+          ..write('cardId: $cardId, ')
+          ..write('quantity: $quantity, ')
+          ..write('addedAt: $addedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, cardId, quantity, addedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is UserCollectionRow &&
+          other.id == this.id &&
+          other.cardId == this.cardId &&
+          other.quantity == this.quantity &&
+          other.addedAt == this.addedAt);
+}
+
+class UserCollectionsCompanion extends UpdateCompanion<UserCollectionRow> {
+  final Value<int> id;
+  final Value<int> cardId;
+  final Value<int> quantity;
+  final Value<DateTime?> addedAt;
+  const UserCollectionsCompanion({
+    this.id = const Value.absent(),
+    this.cardId = const Value.absent(),
+    this.quantity = const Value.absent(),
+    this.addedAt = const Value.absent(),
+  });
+  UserCollectionsCompanion.insert({
+    this.id = const Value.absent(),
+    required int cardId,
+    this.quantity = const Value.absent(),
+    this.addedAt = const Value.absent(),
+  }) : cardId = Value(cardId);
+  static Insertable<UserCollectionRow> custom({
+    Expression<int>? id,
+    Expression<int>? cardId,
+    Expression<int>? quantity,
+    Expression<DateTime>? addedAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (cardId != null) 'card_id': cardId,
+      if (quantity != null) 'quantity': quantity,
+      if (addedAt != null) 'added_at': addedAt,
+    });
+  }
+
+  UserCollectionsCompanion copyWith(
+      {Value<int>? id,
+      Value<int>? cardId,
+      Value<int>? quantity,
+      Value<DateTime?>? addedAt}) {
+    return UserCollectionsCompanion(
+      id: id ?? this.id,
+      cardId: cardId ?? this.cardId,
+      quantity: quantity ?? this.quantity,
+      addedAt: addedAt ?? this.addedAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (cardId.present) {
+      map['card_id'] = Variable<int>(cardId.value);
+    }
+    if (quantity.present) {
+      map['quantity'] = Variable<int>(quantity.value);
+    }
+    if (addedAt.present) {
+      map['added_at'] = Variable<DateTime>(addedAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('UserCollectionsCompanion(')
+          ..write('id: $id, ')
+          ..write('cardId: $cardId, ')
+          ..write('quantity: $quantity, ')
+          ..write('addedAt: $addedAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
   late final $CardsTable cards = $CardsTable(this);
+  late final $UserCollectionsTable userCollections =
+      $UserCollectionsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
   @override
-  List<DatabaseSchemaEntity> get allSchemaEntities => [cards];
+  List<DatabaseSchemaEntity> get allSchemaEntities => [cards, userCollections];
 }
 
 typedef $$CardsTableCreateCompanionBuilder = CardsCompanion Function({
@@ -1283,10 +1546,165 @@ typedef $$CardsTableProcessedTableManager = ProcessedTableManager<
     (CardRow, BaseReferences<_$AppDatabase, $CardsTable, CardRow>),
     CardRow,
     PrefetchHooks Function()>;
+typedef $$UserCollectionsTableCreateCompanionBuilder = UserCollectionsCompanion
+    Function({
+  Value<int> id,
+  required int cardId,
+  Value<int> quantity,
+  Value<DateTime?> addedAt,
+});
+typedef $$UserCollectionsTableUpdateCompanionBuilder = UserCollectionsCompanion
+    Function({
+  Value<int> id,
+  Value<int> cardId,
+  Value<int> quantity,
+  Value<DateTime?> addedAt,
+});
+
+class $$UserCollectionsTableFilterComposer
+    extends Composer<_$AppDatabase, $UserCollectionsTable> {
+  $$UserCollectionsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get cardId => $composableBuilder(
+      column: $table.cardId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get quantity => $composableBuilder(
+      column: $table.quantity, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get addedAt => $composableBuilder(
+      column: $table.addedAt, builder: (column) => ColumnFilters(column));
+}
+
+class $$UserCollectionsTableOrderingComposer
+    extends Composer<_$AppDatabase, $UserCollectionsTable> {
+  $$UserCollectionsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get cardId => $composableBuilder(
+      column: $table.cardId, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get quantity => $composableBuilder(
+      column: $table.quantity, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get addedAt => $composableBuilder(
+      column: $table.addedAt, builder: (column) => ColumnOrderings(column));
+}
+
+class $$UserCollectionsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $UserCollectionsTable> {
+  $$UserCollectionsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<int> get cardId =>
+      $composableBuilder(column: $table.cardId, builder: (column) => column);
+
+  GeneratedColumn<int> get quantity =>
+      $composableBuilder(column: $table.quantity, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get addedAt =>
+      $composableBuilder(column: $table.addedAt, builder: (column) => column);
+}
+
+class $$UserCollectionsTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $UserCollectionsTable,
+    UserCollectionRow,
+    $$UserCollectionsTableFilterComposer,
+    $$UserCollectionsTableOrderingComposer,
+    $$UserCollectionsTableAnnotationComposer,
+    $$UserCollectionsTableCreateCompanionBuilder,
+    $$UserCollectionsTableUpdateCompanionBuilder,
+    (
+      UserCollectionRow,
+      BaseReferences<_$AppDatabase, $UserCollectionsTable, UserCollectionRow>
+    ),
+    UserCollectionRow,
+    PrefetchHooks Function()> {
+  $$UserCollectionsTableTableManager(
+      _$AppDatabase db, $UserCollectionsTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$UserCollectionsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$UserCollectionsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$UserCollectionsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            Value<int> cardId = const Value.absent(),
+            Value<int> quantity = const Value.absent(),
+            Value<DateTime?> addedAt = const Value.absent(),
+          }) =>
+              UserCollectionsCompanion(
+            id: id,
+            cardId: cardId,
+            quantity: quantity,
+            addedAt: addedAt,
+          ),
+          createCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            required int cardId,
+            Value<int> quantity = const Value.absent(),
+            Value<DateTime?> addedAt = const Value.absent(),
+          }) =>
+              UserCollectionsCompanion.insert(
+            id: id,
+            cardId: cardId,
+            quantity: quantity,
+            addedAt: addedAt,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$UserCollectionsTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $UserCollectionsTable,
+    UserCollectionRow,
+    $$UserCollectionsTableFilterComposer,
+    $$UserCollectionsTableOrderingComposer,
+    $$UserCollectionsTableAnnotationComposer,
+    $$UserCollectionsTableCreateCompanionBuilder,
+    $$UserCollectionsTableUpdateCompanionBuilder,
+    (
+      UserCollectionRow,
+      BaseReferences<_$AppDatabase, $UserCollectionsTable, UserCollectionRow>
+    ),
+    UserCollectionRow,
+    PrefetchHooks Function()>;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
   $AppDatabaseManager(this._db);
   $$CardsTableTableManager get cards =>
       $$CardsTableTableManager(_db, _db.cards);
+  $$UserCollectionsTableTableManager get userCollections =>
+      $$UserCollectionsTableTableManager(_db, _db.userCollections);
 }

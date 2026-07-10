@@ -1,7 +1,7 @@
 import 'dart:typed_data';
 import 'ocr_service.dart';
-import 'ocr_service_stub.dart'; // To reuse the StubOcrService
+import 'ocr_service_mobile.dart';
 
 OcrService getOcrService() {
-  return StubOcrService();
+  return MobileOcrService();
 }

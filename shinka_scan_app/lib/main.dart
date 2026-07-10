@@ -91,7 +91,7 @@ class _HomeScreenState extends State<HomeScreen> {
         child: const Icon(Icons.camera_alt),
         // backgroundColor: Colors.blueAccent, // Optional: customize color
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked, // Optional: if you want it docked
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat, // Move upwards so it doesn't hide middle tab
       // If using centerDocked, you might want to adjust the BottomAppBar shape
       // For example, if you also had a BottomAppBar:
       // bottomNavigationBar: BottomAppBar(

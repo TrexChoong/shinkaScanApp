@@ -9,6 +9,8 @@ import 'dart:convert';
 import 'package:shinka_scan_app/services/ocr_service.dart'; 
 import 'package:shinka_scan_app/services/ocr_service_locator.dart'; 
 import 'package:shinka_scan_app/services/web_camera_interop.dart';
+import 'package:shinka_scan_app/data/card_repository.dart';
+import 'package:shinka_scan_app/models/TCGCard.dart';
 
 class OcrScanScreen extends StatefulWidget {
   const OcrScanScreen({super.key});
@@ -133,7 +135,7 @@ Future<void> _pickAndProcessImage(ImageSource source) async {
         _fullRecognizedText = text;
         _extractedCardId = _extractCardId(text);
         if (_extractedCardId != null) {
-          _status = "Card ID Found!";
+          _status = "Card ID Found! Looking up in database...";
         } else {
           _status = "OCR Complete. Card ID pattern not found in recognized text.";
         }
@@ -144,6 +146,20 @@ Future<void> _pickAndProcessImage(ImageSource source) async {
       setState(() {
         _isProcessing = false;
       });
+
+      if (_extractedCardId != null) {
+         final matchResult = await cardRepository.searchCardsByFuzzyId(_extractedCardId!);
+         if (!mounted) return;
+         if (matchResult.exactMatch != null || matchResult.suggestions.isNotEmpty) {
+           final bestMatch = matchResult.exactMatch ?? matchResult.suggestions.first;
+           final otherSuggestions = matchResult.suggestions.where((c) => c.cardno != bestMatch.cardno).toList();
+           _showConfirmationModal(bestMatch, otherSuggestions);
+         } else {
+           setState(() {
+             _status = "Card ID $_extractedCardId not found in database.";
+           });
+         }
+      }
     } catch (e) {
       setState(() {
         _fullRecognizedText = "Error during OCR process: ${e.toString()}";
@@ -169,6 +185,136 @@ Future<void> _pickAndProcessImage(ImageSource source) async {
       return extractedId;
     }
     return null;
+  }
+
+  void _showConfirmationModal(TCGCard exactMatch, List<TCGCard> suggestions) {
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: const Text('Is this a match?'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (exactMatch.imageUrl.isNotEmpty) 
+                 Image.network(exactMatch.imageUrl, height: 150),
+              const SizedBox(height: 10),
+              Text(exactMatch.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+              Text(exactMatch.cardno),
+            ],
+          ),
+          actions: <Widget>[
+            if (suggestions.isNotEmpty)
+              TextButton(
+                child: const Text('Show other suggestions'),
+                onPressed: () {
+                  Navigator.of(dialogContext).pop();
+                  _showSelectionModal(suggestions);
+                },
+              ),
+            TextButton(
+              child: const Text('Cancel'),
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+              },
+            ),
+            TextButton(
+              child: const Text('Yes'),
+              onPressed: () async {
+                print("User clicked Yes! Adding card ${exactMatch.name} (${exactMatch.cardno}) to collection...");
+                Navigator.of(dialogContext).pop();
+                try {
+                  bool added = await cardRepository.addToCollection(exactMatch);
+                  if (added) {
+                    print("Successfully added to collection in database!");
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('${exactMatch.name} added to your collection!')),
+                      );
+                    }
+                  } else {
+                    print("Card already in collection.");
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('${exactMatch.name} is already in your collection.')),
+                      );
+                    }
+                  }
+                } catch (e) {
+                  print("Error adding to collection: $e");
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Failed to add card: $e')),
+                    );
+                  }
+                }
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showSelectionModal(List<TCGCard> suggestions) {
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: const Text('Did you mean?'),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: suggestions.length,
+              itemBuilder: (BuildContext itemContext, int index) {
+                final card = suggestions[index];
+                return ListTile(
+                  leading: card.imageUrl.isNotEmpty ? Image.network(card.imageUrl, width: 40) : const Icon(Icons.credit_card),
+                  title: Text(card.name),
+                  subtitle: Text(card.cardno),
+                  onTap: () async {
+                    print("User tapped suggestion! Adding card ${card.name} (${card.cardno}) to collection...");
+                    Navigator.of(dialogContext).pop();
+                    try {
+                      bool added = await cardRepository.addToCollection(card);
+                      if (added) {
+                        print("Successfully added suggestion to collection in database!");
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('${card.name} added to your collection!')),
+                          );
+                        }
+                      } else {
+                        print("Card already in collection.");
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('${card.name} is already in your collection.')),
+                          );
+                        }
+                      }
+                    } catch (e) {
+                      print("Error adding suggestion to collection: $e");
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Failed to add card: $e')),
+                        );
+                      }
+                    }
+                  },
+                );
+              },
+            ),
+          ),
+          actions: [
+            TextButton(
+              child: const Text('Cancel'),
+              onPressed: () => Navigator.of(dialogContext).pop(),
+            )
+          ],
+        );
+      },
+    );
   }
 
   @override

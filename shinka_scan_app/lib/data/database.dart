@@ -34,12 +34,34 @@ class Cards extends Table {
       ];
 }
 
-@DriftDatabase(tables: [Cards])
+@DataClassName('UserCollectionRow')
+class UserCollections extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  IntColumn get cardId => integer()();
+  IntColumn get quantity => integer().withDefault(const Constant(1))();
+  DateTimeColumn get addedAt => dateTime().nullable()();
+}
+
+@DriftDatabase(tables: [Cards, UserCollections])
 class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _openConnection());
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
+
+  @override
+  MigrationStrategy get migration {
+    return MigrationStrategy(
+      onCreate: (Migrator m) async {
+        await m.createAll();
+      },
+      onUpgrade: (Migrator m, int from, int to) async {
+        if (from < 2) {
+          await m.createTable(userCollections);
+        }
+      },
+    );
+  }
 
   Future<int> cardCount() async {
     final row = await (selectOnly(cards)..addColumns([cards.id.count()]))
@@ -51,6 +73,44 @@ class AppDatabase extends _$AppDatabase {
 
   Future<void> replaceAllCards(List<CardsCompanion> rows) async {
     await batch((b) => b.insertAllOnConflictUpdate(cards, rows));
+  }
+
+  Future<bool> addCardToUserCollection(int cardId) async {
+    final existing = await (select(userCollections)..where((t) => t.cardId.equals(cardId))).getSingleOrNull();
+    if (existing != null) {
+      return false; // Already exists
+    } else {
+      await into(userCollections).insert(
+        UserCollectionsCompanion(
+          cardId: Value(cardId),
+          quantity: const Value(1),
+          addedAt: Value(DateTime.now()),
+        ),
+      );
+      return true;
+    }
+  }
+
+  Future<void> removeCardFromUserCollection(int cardId) async {
+    final existing = await (select(userCollections)..where((t) => t.cardId.equals(cardId))).getSingleOrNull();
+    if (existing != null) {
+      if (existing.quantity > 1) {
+        await update(userCollections).replace(
+          existing.copyWith(quantity: existing.quantity - 1),
+        );
+      } else {
+        await (delete(userCollections)..where((t) => t.cardId.equals(cardId))).go();
+      }
+    }
+  }
+
+  Stream<List<CardRow>> watchUserCollectionCards() {
+    final query = select(cards).join([
+      innerJoin(userCollections, userCollections.cardId.equalsExp(cards.id)),
+    ]);
+    return query.watch().map((rows) {
+      return rows.map((row) => row.readTable(cards)).toList();
+    });
   }
 }
 
