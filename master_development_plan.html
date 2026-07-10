@@ -219,6 +219,7 @@
   .sync-btn:disabled { opacity: 0.5; cursor: default; }
   .sync-msg { font-size: 12px; color: var(--muted); margin: 8px 0 0; min-height: 1em; line-height: 1.45; }
   .sync-msg.ok { color: var(--m3); }
+  .sync-msg.warn { color: var(--ink-2); }
   .today-readout { font-size: 13px; color: var(--ink-2); margin: 12px 0 0; font-variant-numeric: tabular-nums; }
   .today-readout b { color: var(--ink); font-weight: 640; }
   .today-readout .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--today); margin-right: 7px; transform: translateY(0.5px); }
@@ -680,6 +681,10 @@
   // SNAPSHOT (the ITEMS array), so every local change is a chance to drift from
   // the live board — so on every toggle, say exactly what to do about it.
   const REPO_URL = "https://github.com/TrexChoong/shinkaScanApp";
+  // Highest issue number that existed when this ITEMS snapshot was generated.
+  // Anything above it was created since — a signal the snapshot is stale.
+  // Bump this whenever ITEMS is regenerated.
+  const SNAPSHOT_MAX_ISSUE = 90;
   const driftEl = document.getElementById("drift");
   let driftTimer = null;
   function hideDrift() {
@@ -756,9 +761,10 @@
       }
       if (!res.ok) throw new Error(`API returned ${res.status}`);
       const issues = await res.json();
-      let closed = 0, notPlanned = 0, seen = 0;
+      let closed = 0, notPlanned = 0, seen = 0, fresh = 0;
       for (const iss of issues) {
         if (iss.pull_request) continue;      // issues endpoint also lists PRs
+        if (iss.number > SNAPSHOT_MAX_ISSUE) fresh++;  // created since this snapshot
         if (!byN[iss.number]) continue;      // only the top-level tracked items
         seen++;
         if (iss.state === "closed") {
@@ -775,6 +781,12 @@
       const miss = seen < ITEMS.length ? ` · ${ITEMS.length - seen} not on page 1` : "";
       msg.className = "sync-msg ok";
       msg.textContent = `Synced ${hhmm(Date.now())}: ${closed}/${ITEMS.length} tracked issues closed on GitHub${np}${miss}.${left}`;
+      if (fresh) {
+        // State sync can't render new issues (no dates/deps/estimates) — flag them.
+        msg.className = "sync-msg warn";
+        msg.textContent += `  ⚠ ${fresh} new issue${fresh === 1 ? "" : "s"} on GitHub since this snapshot` +
+          `${issues.length >= 100 ? "+" : ""} — not shown here; regenerate the plan to include ${fresh === 1 ? "it" : "them"}.`;
+      }
     } catch (e) {
       msg.className = "sync-msg";
       msg.innerHTML =
