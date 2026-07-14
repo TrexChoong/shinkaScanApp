@@ -7,7 +7,7 @@ void main() {
   late String raw;
 
   setUpAll(() {
-    raw = File('DB/250615/Results.csv').readAsStringSync();
+    raw = File('DB/Results.csv').readAsStringSync();
   });
 
   test('parses every logical data row from the scraped CSV', () {
@@ -21,7 +21,7 @@ void main() {
     final rows = parseCardsCsv(raw);
     final row = rows.firstWhere((r) => r.cardno.value == 'BP02-003');
 
-    expect(row.expansion.value, 'BP02');
+    expect(row.setCode.value, 'BP02');
     expect(row.japaneseName.value, '古き森の白狼');
     expect(row.rarity.value, 'LG');
     expect(row.cost.value, 7);
@@ -41,9 +41,9 @@ void main() {
     expect(row.defense.value, isNull);
   });
 
-  test('every row has a unique (expansion, cardno) pair', () {
+  test('every row has a unique (setCode, cardno) pair', () {
     final rows = parseCardsCsv(raw);
-    final keys = rows.map((r) => '${r.expansion.value}-${r.cardno.value}').toSet();
+    final keys = rows.map((r) => '${r.setCode.value}-${r.cardno.value}').toSet();
     expect(keys, hasLength(rows.length));
   });
 }

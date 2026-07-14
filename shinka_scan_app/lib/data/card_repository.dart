@@ -1,4 +1,5 @@
 import '../models/TCGCard.dart';
+import '../models/booster.dart';
 import 'card_csv_loader.dart';
 import 'database.dart';
 import 'dart:math';
@@ -20,6 +21,13 @@ class CardRepository {
     if (count == 0) {
       final rows = await loadCardsFromCsvAsset();
       await _db.replaceAllCards(rows);
+      
+      try {
+        final expRows = await loadSetsFromCsvAsset();
+        await _db.replaceAllSets(expRows);
+      } catch (e) {
+        // Sets file might not exist yet if scraper hasn't run
+      }
     }
   }
 
@@ -27,6 +35,69 @@ class CardRepository {
     await _ensureSeeded();
     final rows = await _db.allCards();
     return rows.map(_toTcgCard).toList();
+  }
+
+  Future<List<SetRow>> getAllSetsList() async {
+    await _ensureSeeded();
+    return await _db.allSets();
+  }
+
+  Future<List<TCGCard>> getPagedCards(
+    int limit, 
+    int offset, {
+    String? query, 
+    String? setCode,
+    List<String>? classes,
+    List<String>? rarities,
+    List<String>? cardTypes,
+    List<int>? costs,
+    bool? cost8Plus,
+    int? minAttack,
+    int? maxAttack,
+    int? minDefense,
+    int? maxDefense,
+    String? subtype,
+    String? title,
+    String? keyword,
+    bool excludeSameName = false,
+  }) async {
+    await _ensureSeeded();
+    final rows = await _db.getPagedCards(
+      limit, 
+      offset, 
+      query: query, 
+      setCode: setCode,
+      classes: classes,
+      rarities: rarities,
+      cardTypes: cardTypes,
+      costs: costs,
+      cost8Plus: cost8Plus,
+      minAttack: minAttack,
+      maxAttack: maxAttack,
+      minDefense: minDefense,
+      maxDefense: maxDefense,
+      subtype: subtype,
+      title: title,
+      keyword: keyword,
+      excludeSameName: excludeSameName,
+    );
+    return rows.map(_toTcgCard).toList();
+  }
+
+  Future<List<Booster>> getAllBoosters() async {
+    await _ensureSeeded();
+    final setRows = await _db.allSets();
+    final allCardsList = await getAllCards();
+
+    return setRows.map((setRow) {
+      final possibleCards = allCardsList.where((c) => c.setCode == setRow.setCode).toList();
+      return Booster(
+        id: setRow.setCode,
+        name: setRow.japaneseName,
+        possibleCards: possibleCards,
+        imageUrl: 'https://shadowverse-evolve.com/wordpress/wp-content/uploads/cardimg/${setRow.setCode}-001.png', // Fallback or logic for image
+      );
+    }).toList();
   }
 
   Future<bool> addToCollection(TCGCard card) async {
@@ -43,10 +114,10 @@ class CardRepository {
     });
   }
 
-  Future<TCGCard?> getByCardno(String expansion, String cardno) async {
+  Future<TCGCard?> getByCardno(String setCode, String cardno) async {
     final allCardsList = await getAllCards();
     try {
-      return allCardsList.firstWhere((c) => c.expansion == expansion && c.cardno == cardno);
+      return allCardsList.firstWhere((c) => c.setCode == setCode && c.cardno == cardno);
     } catch(e) {
       return null;
     }
@@ -55,12 +126,12 @@ class CardRepository {
   TCGCard _toTcgCard(CardRow row) {
     final setName = (row.japaneseSetName != null && row.japaneseSetName!.isNotEmpty)
         ? row.japaneseSetName!
-        : row.expansion;
+        : row.setCode;
         
     return TCGCard(
         id: row.id.toString(),
         cardno: row.cardno,
-        expansion: row.expansion,
+        setCode: row.setCode,
         name: row.japaneseName ?? row.cardno,
         imageUrl: row.imageUrl ?? '',
         detailPageUrl: row.detailPageUrl ?? '',

@@ -1,7 +1,7 @@
 class TCGCard {
   final String id;
   final String cardno;
-  final String expansion;
+  final String setCode;
   final String name;
   final String imageUrl;
   final String detailPageUrl;
@@ -19,7 +19,7 @@ class TCGCard {
   TCGCard({
     required this.id,
     required this.cardno,
-    required this.expansion,
+    required this.setCode,
     required this.name,
     required this.imageUrl,
     required this.detailPageUrl,

@@ -4,7 +4,8 @@ import 'package:flutter/services.dart' show rootBundle;
 
 import 'database.dart';
 
-const cardsCsvAsset = 'DB/250615/Results.csv';
+const cardsCsvAsset = 'DB/Results.csv';
+const setsCsvAsset = 'DB/Sets.csv';
 
 int? _parseInt(String value) =>
     value == 'NULL' || value.isEmpty ? null : int.tryParse(value);
@@ -22,6 +23,11 @@ Future<List<CardsCompanion>> loadCardsFromCsvAsset() async {
   return parseCardsCsv(raw);
 }
 
+Future<List<SetsCompanion>> loadSetsFromCsvAsset() async {
+  final raw = await rootBundle.loadString(setsCsvAsset);
+  return parseSetsCsv(raw);
+}
+
 List<CardsCompanion> parseCardsCsv(String raw) {
   final rows = const CsvToListConverter(eol: '\n').convert(raw);
   if (rows.isEmpty) return const [];
@@ -31,7 +37,7 @@ List<CardsCompanion> parseCardsCsv(String raw) {
 
   final idIdx = col('id');
   final cardnoIdx = col('cardno');
-  final expansionIdx = col('expansion');
+  final setCodeIdx = col('expansion');
   final japaneseNameIdx = col('japanese_name');
   final imageUrlIdx = col('image_url');
   final detailPageUrlIdx = col('detail_page_url');
@@ -55,7 +61,7 @@ List<CardsCompanion> parseCardsCsv(String raw) {
     return CardsCompanion.insert(
       id: Value(int.parse(cell(row, idIdx))),
       cardno: cell(row, cardnoIdx),
-      expansion: cell(row, expansionIdx),
+      setCode: cell(row, setCodeIdx),
       japaneseName: Value(_parseText(cell(row, japaneseNameIdx))),
       imageUrl: Value(_parseText(cell(row, imageUrlIdx))),
       detailPageUrl: Value(_parseText(cell(row, detailPageUrlIdx))),
@@ -72,6 +78,30 @@ List<CardsCompanion> parseCardsCsv(String raw) {
       lastScrapedDetailsAt: Value(_parseDateTime(cell(row, lastScrapedIdx))),
       createdAt: Value(_parseDateTime(cell(row, createdAtIdx))),
       updatedAt: Value(_parseDateTime(cell(row, updatedAtIdx))),
+    );
+  }).toList();
+}
+
+List<SetsCompanion> parseSetsCsv(String raw) {
+  final rows = const CsvToListConverter(eol: '\n').convert(raw);
+  if (rows.isEmpty) return const [];
+
+  final header = rows.first.map((e) => e.toString()).toList();
+  int col(String name) => header.indexOf(name);
+
+  final setCodeIdx = col('set_code');
+  final japaneseNameIdx = col('japanese_name');
+  final typeIdx = col('type');
+  final releaseDateIdx = col('release_date');
+
+  String cell(List<dynamic> row, int idx) => idx == -1 ? '' : row[idx].toString();
+
+  return rows.skip(1).where((row) => row.length >= header.length).map((row) {
+    return SetsCompanion.insert(
+      setCode: cell(row, setCodeIdx),
+      japaneseName: cell(row, japaneseNameIdx),
+      type: Value(_parseText(cell(row, typeIdx))),
+      releaseDate: Value(_parseText(cell(row, releaseDateIdx))),
     );
   }).toList();
 }

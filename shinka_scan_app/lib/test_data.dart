@@ -6,7 +6,7 @@ class TestData {
     TCGCard(
       id: '1',
       cardno: 'BP01-001',
-      expansion: 'BP01',
+      setCode: 'BP01',
       name: '閃耀の剣士・バイロン', // Example Japanese Name
       imageUrl: 'https://shadowverse-evolve.com/wordpress/wp-content/uploads/cardimg/BP01-001.png',
       detailPageUrl: '/cardlist/carddetail/?cardno=BP01-001&expansion=BP01',
@@ -24,7 +24,7 @@ class TestData {
     TCGCard(
       id: '2',
       cardno: 'BP01-002',
-      expansion: 'BP01',
+      setCode: 'BP01',
       name: '不屈の兵士',
       imageUrl: 'https://shadowverse-evolve.com/wordpress/wp-content/uploads/cardimg/BP01-002.png',
       detailPageUrl: '/cardlist/carddetail/?cardno=BP01-002&expansion=BP01',
@@ -43,7 +43,7 @@ class TestData {
     TCGCard(
       id: '3',
       cardno: 'BP02-058',
-      expansion: 'BP02',
+      setCode: 'BP02',
       name: 'マーリン',
       imageUrl: 'https://shadowverse-evolve.com/wordpress/wp-content/uploads/cardimg/BP02-058.png',
       detailPageUrl: '/cardlist/carddetail/?cardno=BP02-058&expansion=BP02',

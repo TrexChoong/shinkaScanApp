@@ -18,11 +18,11 @@ class $CardsTable extends Cards with TableInfo<$CardsTable, CardRow> {
   late final GeneratedColumn<String> cardno = GeneratedColumn<String>(
       'cardno', aliasedName, false,
       type: DriftSqlType.string, requiredDuringInsert: true);
-  static const VerificationMeta _expansionMeta =
-      const VerificationMeta('expansion');
+  static const VerificationMeta _setCodeMeta =
+      const VerificationMeta('setCode');
   @override
-  late final GeneratedColumn<String> expansion = GeneratedColumn<String>(
-      'expansion', aliasedName, false,
+  late final GeneratedColumn<String> setCode = GeneratedColumn<String>(
+      'set_code', aliasedName, false,
       type: DriftSqlType.string, requiredDuringInsert: true);
   static const VerificationMeta _japaneseNameMeta =
       const VerificationMeta('japaneseName');
@@ -121,7 +121,7 @@ class $CardsTable extends Cards with TableInfo<$CardsTable, CardRow> {
   List<GeneratedColumn> get $columns => [
         id,
         cardno,
-        expansion,
+        setCode,
         japaneseName,
         imageUrl,
         detailPageUrl,
@@ -158,11 +158,11 @@ class $CardsTable extends Cards with TableInfo<$CardsTable, CardRow> {
     } else if (isInserting) {
       context.missing(_cardnoMeta);
     }
-    if (data.containsKey('expansion')) {
-      context.handle(_expansionMeta,
-          expansion.isAcceptableOrUnknown(data['expansion']!, _expansionMeta));
+    if (data.containsKey('set_code')) {
+      context.handle(_setCodeMeta,
+          setCode.isAcceptableOrUnknown(data['set_code']!, _setCodeMeta));
     } else if (isInserting) {
-      context.missing(_expansionMeta);
+      context.missing(_setCodeMeta);
     }
     if (data.containsKey('japanese_name')) {
       context.handle(
@@ -247,7 +247,7 @@ class $CardsTable extends Cards with TableInfo<$CardsTable, CardRow> {
   Set<GeneratedColumn> get $primaryKey => {id};
   @override
   List<Set<GeneratedColumn>> get uniqueKeys => [
-        {expansion, cardno},
+        {setCode, cardno},
       ];
   @override
   CardRow map(Map<String, dynamic> data, {String? tablePrefix}) {
@@ -257,8 +257,8 @@ class $CardsTable extends Cards with TableInfo<$CardsTable, CardRow> {
           .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
       cardno: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}cardno'])!,
-      expansion: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}expansion'])!,
+      setCode: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}set_code'])!,
       japaneseName: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}japanese_name']),
       imageUrl: attachedDatabase.typeMapping
@@ -304,7 +304,7 @@ class $CardsTable extends Cards with TableInfo<$CardsTable, CardRow> {
 class CardRow extends DataClass implements Insertable<CardRow> {
   final int id;
   final String cardno;
-  final String expansion;
+  final String setCode;
   final String? japaneseName;
   final String? imageUrl;
   final String? detailPageUrl;
@@ -324,7 +324,7 @@ class CardRow extends DataClass implements Insertable<CardRow> {
   const CardRow(
       {required this.id,
       required this.cardno,
-      required this.expansion,
+      required this.setCode,
       this.japaneseName,
       this.imageUrl,
       this.detailPageUrl,
@@ -346,7 +346,7 @@ class CardRow extends DataClass implements Insertable<CardRow> {
     final map = <String, Expression>{};
     map['id'] = Variable<int>(id);
     map['cardno'] = Variable<String>(cardno);
-    map['expansion'] = Variable<String>(expansion);
+    map['set_code'] = Variable<String>(setCode);
     if (!nullToAbsent || japaneseName != null) {
       map['japanese_name'] = Variable<String>(japaneseName);
     }
@@ -402,7 +402,7 @@ class CardRow extends DataClass implements Insertable<CardRow> {
     return CardsCompanion(
       id: Value(id),
       cardno: Value(cardno),
-      expansion: Value(expansion),
+      setCode: Value(setCode),
       japaneseName: japaneseName == null && nullToAbsent
           ? const Value.absent()
           : Value(japaneseName),
@@ -456,7 +456,7 @@ class CardRow extends DataClass implements Insertable<CardRow> {
     return CardRow(
       id: serializer.fromJson<int>(json['id']),
       cardno: serializer.fromJson<String>(json['cardno']),
-      expansion: serializer.fromJson<String>(json['expansion']),
+      setCode: serializer.fromJson<String>(json['setCode']),
       japaneseName: serializer.fromJson<String?>(json['japaneseName']),
       imageUrl: serializer.fromJson<String?>(json['imageUrl']),
       detailPageUrl: serializer.fromJson<String?>(json['detailPageUrl']),
@@ -482,7 +482,7 @@ class CardRow extends DataClass implements Insertable<CardRow> {
     return <String, dynamic>{
       'id': serializer.toJson<int>(id),
       'cardno': serializer.toJson<String>(cardno),
-      'expansion': serializer.toJson<String>(expansion),
+      'setCode': serializer.toJson<String>(setCode),
       'japaneseName': serializer.toJson<String?>(japaneseName),
       'imageUrl': serializer.toJson<String?>(imageUrl),
       'detailPageUrl': serializer.toJson<String?>(detailPageUrl),
@@ -506,7 +506,7 @@ class CardRow extends DataClass implements Insertable<CardRow> {
   CardRow copyWith(
           {int? id,
           String? cardno,
-          String? expansion,
+          String? setCode,
           Value<String?> japaneseName = const Value.absent(),
           Value<String?> imageUrl = const Value.absent(),
           Value<String?> detailPageUrl = const Value.absent(),
@@ -526,7 +526,7 @@ class CardRow extends DataClass implements Insertable<CardRow> {
       CardRow(
         id: id ?? this.id,
         cardno: cardno ?? this.cardno,
-        expansion: expansion ?? this.expansion,
+        setCode: setCode ?? this.setCode,
         japaneseName:
             japaneseName.present ? japaneseName.value : this.japaneseName,
         imageUrl: imageUrl.present ? imageUrl.value : this.imageUrl,
@@ -554,7 +554,7 @@ class CardRow extends DataClass implements Insertable<CardRow> {
     return CardRow(
       id: data.id.present ? data.id.value : this.id,
       cardno: data.cardno.present ? data.cardno.value : this.cardno,
-      expansion: data.expansion.present ? data.expansion.value : this.expansion,
+      setCode: data.setCode.present ? data.setCode.value : this.setCode,
       japaneseName: data.japaneseName.present
           ? data.japaneseName.value
           : this.japaneseName,
@@ -589,7 +589,7 @@ class CardRow extends DataClass implements Insertable<CardRow> {
     return (StringBuffer('CardRow(')
           ..write('id: $id, ')
           ..write('cardno: $cardno, ')
-          ..write('expansion: $expansion, ')
+          ..write('setCode: $setCode, ')
           ..write('japaneseName: $japaneseName, ')
           ..write('imageUrl: $imageUrl, ')
           ..write('detailPageUrl: $detailPageUrl, ')
@@ -614,7 +614,7 @@ class CardRow extends DataClass implements Insertable<CardRow> {
   int get hashCode => Object.hash(
       id,
       cardno,
-      expansion,
+      setCode,
       japaneseName,
       imageUrl,
       detailPageUrl,
@@ -637,7 +637,7 @@ class CardRow extends DataClass implements Insertable<CardRow> {
       (other is CardRow &&
           other.id == this.id &&
           other.cardno == this.cardno &&
-          other.expansion == this.expansion &&
+          other.setCode == this.setCode &&
           other.japaneseName == this.japaneseName &&
           other.imageUrl == this.imageUrl &&
           other.detailPageUrl == this.detailPageUrl &&
@@ -659,7 +659,7 @@ class CardRow extends DataClass implements Insertable<CardRow> {
 class CardsCompanion extends UpdateCompanion<CardRow> {
   final Value<int> id;
   final Value<String> cardno;
-  final Value<String> expansion;
+  final Value<String> setCode;
   final Value<String?> japaneseName;
   final Value<String?> imageUrl;
   final Value<String?> detailPageUrl;
@@ -679,7 +679,7 @@ class CardsCompanion extends UpdateCompanion<CardRow> {
   const CardsCompanion({
     this.id = const Value.absent(),
     this.cardno = const Value.absent(),
-    this.expansion = const Value.absent(),
+    this.setCode = const Value.absent(),
     this.japaneseName = const Value.absent(),
     this.imageUrl = const Value.absent(),
     this.detailPageUrl = const Value.absent(),
@@ -700,7 +700,7 @@ class CardsCompanion extends UpdateCompanion<CardRow> {
   CardsCompanion.insert({
     this.id = const Value.absent(),
     required String cardno,
-    required String expansion,
+    required String setCode,
     this.japaneseName = const Value.absent(),
     this.imageUrl = const Value.absent(),
     this.detailPageUrl = const Value.absent(),
@@ -718,11 +718,11 @@ class CardsCompanion extends UpdateCompanion<CardRow> {
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
   })  : cardno = Value(cardno),
-        expansion = Value(expansion);
+        setCode = Value(setCode);
   static Insertable<CardRow> custom({
     Expression<int>? id,
     Expression<String>? cardno,
-    Expression<String>? expansion,
+    Expression<String>? setCode,
     Expression<String>? japaneseName,
     Expression<String>? imageUrl,
     Expression<String>? detailPageUrl,
@@ -743,7 +743,7 @@ class CardsCompanion extends UpdateCompanion<CardRow> {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (cardno != null) 'cardno': cardno,
-      if (expansion != null) 'expansion': expansion,
+      if (setCode != null) 'set_code': setCode,
       if (japaneseName != null) 'japanese_name': japaneseName,
       if (imageUrl != null) 'image_url': imageUrl,
       if (detailPageUrl != null) 'detail_page_url': detailPageUrl,
@@ -767,7 +767,7 @@ class CardsCompanion extends UpdateCompanion<CardRow> {
   CardsCompanion copyWith(
       {Value<int>? id,
       Value<String>? cardno,
-      Value<String>? expansion,
+      Value<String>? setCode,
       Value<String?>? japaneseName,
       Value<String?>? imageUrl,
       Value<String?>? detailPageUrl,
@@ -787,7 +787,7 @@ class CardsCompanion extends UpdateCompanion<CardRow> {
     return CardsCompanion(
       id: id ?? this.id,
       cardno: cardno ?? this.cardno,
-      expansion: expansion ?? this.expansion,
+      setCode: setCode ?? this.setCode,
       japaneseName: japaneseName ?? this.japaneseName,
       imageUrl: imageUrl ?? this.imageUrl,
       detailPageUrl: detailPageUrl ?? this.detailPageUrl,
@@ -816,8 +816,8 @@ class CardsCompanion extends UpdateCompanion<CardRow> {
     if (cardno.present) {
       map['cardno'] = Variable<String>(cardno.value);
     }
-    if (expansion.present) {
-      map['expansion'] = Variable<String>(expansion.value);
+    if (setCode.present) {
+      map['set_code'] = Variable<String>(setCode.value);
     }
     if (japaneseName.present) {
       map['japanese_name'] = Variable<String>(japaneseName.value);
@@ -876,7 +876,7 @@ class CardsCompanion extends UpdateCompanion<CardRow> {
     return (StringBuffer('CardsCompanion(')
           ..write('id: $id, ')
           ..write('cardno: $cardno, ')
-          ..write('expansion: $expansion, ')
+          ..write('setCode: $setCode, ')
           ..write('japaneseName: $japaneseName, ')
           ..write('imageUrl: $imageUrl, ')
           ..write('detailPageUrl: $detailPageUrl, ')
@@ -1159,23 +1159,304 @@ class UserCollectionsCompanion extends UpdateCompanion<UserCollectionRow> {
   }
 }
 
+class $SetsTable extends Sets with TableInfo<$SetsTable, SetRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $SetsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _setCodeMeta =
+      const VerificationMeta('setCode');
+  @override
+  late final GeneratedColumn<String> setCode = GeneratedColumn<String>(
+      'set_code', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _japaneseNameMeta =
+      const VerificationMeta('japaneseName');
+  @override
+  late final GeneratedColumn<String> japaneseName = GeneratedColumn<String>(
+      'japanese_name', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _typeMeta = const VerificationMeta('type');
+  @override
+  late final GeneratedColumn<String> type = GeneratedColumn<String>(
+      'type', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _releaseDateMeta =
+      const VerificationMeta('releaseDate');
+  @override
+  late final GeneratedColumn<String> releaseDate = GeneratedColumn<String>(
+      'release_date', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  @override
+  List<GeneratedColumn> get $columns =>
+      [setCode, japaneseName, type, releaseDate];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'sets';
+  @override
+  VerificationContext validateIntegrity(Insertable<SetRow> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('set_code')) {
+      context.handle(_setCodeMeta,
+          setCode.isAcceptableOrUnknown(data['set_code']!, _setCodeMeta));
+    } else if (isInserting) {
+      context.missing(_setCodeMeta);
+    }
+    if (data.containsKey('japanese_name')) {
+      context.handle(
+          _japaneseNameMeta,
+          japaneseName.isAcceptableOrUnknown(
+              data['japanese_name']!, _japaneseNameMeta));
+    } else if (isInserting) {
+      context.missing(_japaneseNameMeta);
+    }
+    if (data.containsKey('type')) {
+      context.handle(
+          _typeMeta, type.isAcceptableOrUnknown(data['type']!, _typeMeta));
+    }
+    if (data.containsKey('release_date')) {
+      context.handle(
+          _releaseDateMeta,
+          releaseDate.isAcceptableOrUnknown(
+              data['release_date']!, _releaseDateMeta));
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {setCode};
+  @override
+  SetRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return SetRow(
+      setCode: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}set_code'])!,
+      japaneseName: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}japanese_name'])!,
+      type: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}type']),
+      releaseDate: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}release_date']),
+    );
+  }
+
+  @override
+  $SetsTable createAlias(String alias) {
+    return $SetsTable(attachedDatabase, alias);
+  }
+}
+
+class SetRow extends DataClass implements Insertable<SetRow> {
+  final String setCode;
+  final String japaneseName;
+  final String? type;
+  final String? releaseDate;
+  const SetRow(
+      {required this.setCode,
+      required this.japaneseName,
+      this.type,
+      this.releaseDate});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['set_code'] = Variable<String>(setCode);
+    map['japanese_name'] = Variable<String>(japaneseName);
+    if (!nullToAbsent || type != null) {
+      map['type'] = Variable<String>(type);
+    }
+    if (!nullToAbsent || releaseDate != null) {
+      map['release_date'] = Variable<String>(releaseDate);
+    }
+    return map;
+  }
+
+  SetsCompanion toCompanion(bool nullToAbsent) {
+    return SetsCompanion(
+      setCode: Value(setCode),
+      japaneseName: Value(japaneseName),
+      type: type == null && nullToAbsent ? const Value.absent() : Value(type),
+      releaseDate: releaseDate == null && nullToAbsent
+          ? const Value.absent()
+          : Value(releaseDate),
+    );
+  }
+
+  factory SetRow.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return SetRow(
+      setCode: serializer.fromJson<String>(json['setCode']),
+      japaneseName: serializer.fromJson<String>(json['japaneseName']),
+      type: serializer.fromJson<String?>(json['type']),
+      releaseDate: serializer.fromJson<String?>(json['releaseDate']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'setCode': serializer.toJson<String>(setCode),
+      'japaneseName': serializer.toJson<String>(japaneseName),
+      'type': serializer.toJson<String?>(type),
+      'releaseDate': serializer.toJson<String?>(releaseDate),
+    };
+  }
+
+  SetRow copyWith(
+          {String? setCode,
+          String? japaneseName,
+          Value<String?> type = const Value.absent(),
+          Value<String?> releaseDate = const Value.absent()}) =>
+      SetRow(
+        setCode: setCode ?? this.setCode,
+        japaneseName: japaneseName ?? this.japaneseName,
+        type: type.present ? type.value : this.type,
+        releaseDate: releaseDate.present ? releaseDate.value : this.releaseDate,
+      );
+  SetRow copyWithCompanion(SetsCompanion data) {
+    return SetRow(
+      setCode: data.setCode.present ? data.setCode.value : this.setCode,
+      japaneseName: data.japaneseName.present
+          ? data.japaneseName.value
+          : this.japaneseName,
+      type: data.type.present ? data.type.value : this.type,
+      releaseDate:
+          data.releaseDate.present ? data.releaseDate.value : this.releaseDate,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SetRow(')
+          ..write('setCode: $setCode, ')
+          ..write('japaneseName: $japaneseName, ')
+          ..write('type: $type, ')
+          ..write('releaseDate: $releaseDate')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(setCode, japaneseName, type, releaseDate);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is SetRow &&
+          other.setCode == this.setCode &&
+          other.japaneseName == this.japaneseName &&
+          other.type == this.type &&
+          other.releaseDate == this.releaseDate);
+}
+
+class SetsCompanion extends UpdateCompanion<SetRow> {
+  final Value<String> setCode;
+  final Value<String> japaneseName;
+  final Value<String?> type;
+  final Value<String?> releaseDate;
+  final Value<int> rowid;
+  const SetsCompanion({
+    this.setCode = const Value.absent(),
+    this.japaneseName = const Value.absent(),
+    this.type = const Value.absent(),
+    this.releaseDate = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  SetsCompanion.insert({
+    required String setCode,
+    required String japaneseName,
+    this.type = const Value.absent(),
+    this.releaseDate = const Value.absent(),
+    this.rowid = const Value.absent(),
+  })  : setCode = Value(setCode),
+        japaneseName = Value(japaneseName);
+  static Insertable<SetRow> custom({
+    Expression<String>? setCode,
+    Expression<String>? japaneseName,
+    Expression<String>? type,
+    Expression<String>? releaseDate,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (setCode != null) 'set_code': setCode,
+      if (japaneseName != null) 'japanese_name': japaneseName,
+      if (type != null) 'type': type,
+      if (releaseDate != null) 'release_date': releaseDate,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  SetsCompanion copyWith(
+      {Value<String>? setCode,
+      Value<String>? japaneseName,
+      Value<String?>? type,
+      Value<String?>? releaseDate,
+      Value<int>? rowid}) {
+    return SetsCompanion(
+      setCode: setCode ?? this.setCode,
+      japaneseName: japaneseName ?? this.japaneseName,
+      type: type ?? this.type,
+      releaseDate: releaseDate ?? this.releaseDate,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (setCode.present) {
+      map['set_code'] = Variable<String>(setCode.value);
+    }
+    if (japaneseName.present) {
+      map['japanese_name'] = Variable<String>(japaneseName.value);
+    }
+    if (type.present) {
+      map['type'] = Variable<String>(type.value);
+    }
+    if (releaseDate.present) {
+      map['release_date'] = Variable<String>(releaseDate.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SetsCompanion(')
+          ..write('setCode: $setCode, ')
+          ..write('japaneseName: $japaneseName, ')
+          ..write('type: $type, ')
+          ..write('releaseDate: $releaseDate, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
   late final $CardsTable cards = $CardsTable(this);
   late final $UserCollectionsTable userCollections =
       $UserCollectionsTable(this);
+  late final $SetsTable sets = $SetsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
   @override
-  List<DatabaseSchemaEntity> get allSchemaEntities => [cards, userCollections];
+  List<DatabaseSchemaEntity> get allSchemaEntities =>
+      [cards, userCollections, sets];
 }
 
 typedef $$CardsTableCreateCompanionBuilder = CardsCompanion Function({
   Value<int> id,
   required String cardno,
-  required String expansion,
+  required String setCode,
   Value<String?> japaneseName,
   Value<String?> imageUrl,
   Value<String?> detailPageUrl,
@@ -1196,7 +1477,7 @@ typedef $$CardsTableCreateCompanionBuilder = CardsCompanion Function({
 typedef $$CardsTableUpdateCompanionBuilder = CardsCompanion Function({
   Value<int> id,
   Value<String> cardno,
-  Value<String> expansion,
+  Value<String> setCode,
   Value<String?> japaneseName,
   Value<String?> imageUrl,
   Value<String?> detailPageUrl,
@@ -1229,8 +1510,8 @@ class $$CardsTableFilterComposer extends Composer<_$AppDatabase, $CardsTable> {
   ColumnFilters<String> get cardno => $composableBuilder(
       column: $table.cardno, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<String> get expansion => $composableBuilder(
-      column: $table.expansion, builder: (column) => ColumnFilters(column));
+  ColumnFilters<String> get setCode => $composableBuilder(
+      column: $table.setCode, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get japaneseName => $composableBuilder(
       column: $table.japaneseName, builder: (column) => ColumnFilters(column));
@@ -1298,8 +1579,8 @@ class $$CardsTableOrderingComposer
   ColumnOrderings<String> get cardno => $composableBuilder(
       column: $table.cardno, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<String> get expansion => $composableBuilder(
-      column: $table.expansion, builder: (column) => ColumnOrderings(column));
+  ColumnOrderings<String> get setCode => $composableBuilder(
+      column: $table.setCode, builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<String> get japaneseName => $composableBuilder(
       column: $table.japaneseName,
@@ -1369,8 +1650,8 @@ class $$CardsTableAnnotationComposer
   GeneratedColumn<String> get cardno =>
       $composableBuilder(column: $table.cardno, builder: (column) => column);
 
-  GeneratedColumn<String> get expansion =>
-      $composableBuilder(column: $table.expansion, builder: (column) => column);
+  GeneratedColumn<String> get setCode =>
+      $composableBuilder(column: $table.setCode, builder: (column) => column);
 
   GeneratedColumn<String> get japaneseName => $composableBuilder(
       column: $table.japaneseName, builder: (column) => column);
@@ -1446,7 +1727,7 @@ class $$CardsTableTableManager extends RootTableManager<
           updateCompanionCallback: ({
             Value<int> id = const Value.absent(),
             Value<String> cardno = const Value.absent(),
-            Value<String> expansion = const Value.absent(),
+            Value<String> setCode = const Value.absent(),
             Value<String?> japaneseName = const Value.absent(),
             Value<String?> imageUrl = const Value.absent(),
             Value<String?> detailPageUrl = const Value.absent(),
@@ -1467,7 +1748,7 @@ class $$CardsTableTableManager extends RootTableManager<
               CardsCompanion(
             id: id,
             cardno: cardno,
-            expansion: expansion,
+            setCode: setCode,
             japaneseName: japaneseName,
             imageUrl: imageUrl,
             detailPageUrl: detailPageUrl,
@@ -1488,7 +1769,7 @@ class $$CardsTableTableManager extends RootTableManager<
           createCompanionCallback: ({
             Value<int> id = const Value.absent(),
             required String cardno,
-            required String expansion,
+            required String setCode,
             Value<String?> japaneseName = const Value.absent(),
             Value<String?> imageUrl = const Value.absent(),
             Value<String?> detailPageUrl = const Value.absent(),
@@ -1509,7 +1790,7 @@ class $$CardsTableTableManager extends RootTableManager<
               CardsCompanion.insert(
             id: id,
             cardno: cardno,
-            expansion: expansion,
+            setCode: setCode,
             japaneseName: japaneseName,
             imageUrl: imageUrl,
             detailPageUrl: detailPageUrl,
@@ -1699,6 +1980,155 @@ typedef $$UserCollectionsTableProcessedTableManager = ProcessedTableManager<
     ),
     UserCollectionRow,
     PrefetchHooks Function()>;
+typedef $$SetsTableCreateCompanionBuilder = SetsCompanion Function({
+  required String setCode,
+  required String japaneseName,
+  Value<String?> type,
+  Value<String?> releaseDate,
+  Value<int> rowid,
+});
+typedef $$SetsTableUpdateCompanionBuilder = SetsCompanion Function({
+  Value<String> setCode,
+  Value<String> japaneseName,
+  Value<String?> type,
+  Value<String?> releaseDate,
+  Value<int> rowid,
+});
+
+class $$SetsTableFilterComposer extends Composer<_$AppDatabase, $SetsTable> {
+  $$SetsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get setCode => $composableBuilder(
+      column: $table.setCode, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get japaneseName => $composableBuilder(
+      column: $table.japaneseName, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get type => $composableBuilder(
+      column: $table.type, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get releaseDate => $composableBuilder(
+      column: $table.releaseDate, builder: (column) => ColumnFilters(column));
+}
+
+class $$SetsTableOrderingComposer extends Composer<_$AppDatabase, $SetsTable> {
+  $$SetsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get setCode => $composableBuilder(
+      column: $table.setCode, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get japaneseName => $composableBuilder(
+      column: $table.japaneseName,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get type => $composableBuilder(
+      column: $table.type, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get releaseDate => $composableBuilder(
+      column: $table.releaseDate, builder: (column) => ColumnOrderings(column));
+}
+
+class $$SetsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $SetsTable> {
+  $$SetsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get setCode =>
+      $composableBuilder(column: $table.setCode, builder: (column) => column);
+
+  GeneratedColumn<String> get japaneseName => $composableBuilder(
+      column: $table.japaneseName, builder: (column) => column);
+
+  GeneratedColumn<String> get type =>
+      $composableBuilder(column: $table.type, builder: (column) => column);
+
+  GeneratedColumn<String> get releaseDate => $composableBuilder(
+      column: $table.releaseDate, builder: (column) => column);
+}
+
+class $$SetsTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $SetsTable,
+    SetRow,
+    $$SetsTableFilterComposer,
+    $$SetsTableOrderingComposer,
+    $$SetsTableAnnotationComposer,
+    $$SetsTableCreateCompanionBuilder,
+    $$SetsTableUpdateCompanionBuilder,
+    (SetRow, BaseReferences<_$AppDatabase, $SetsTable, SetRow>),
+    SetRow,
+    PrefetchHooks Function()> {
+  $$SetsTableTableManager(_$AppDatabase db, $SetsTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$SetsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$SetsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$SetsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<String> setCode = const Value.absent(),
+            Value<String> japaneseName = const Value.absent(),
+            Value<String?> type = const Value.absent(),
+            Value<String?> releaseDate = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              SetsCompanion(
+            setCode: setCode,
+            japaneseName: japaneseName,
+            type: type,
+            releaseDate: releaseDate,
+            rowid: rowid,
+          ),
+          createCompanionCallback: ({
+            required String setCode,
+            required String japaneseName,
+            Value<String?> type = const Value.absent(),
+            Value<String?> releaseDate = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              SetsCompanion.insert(
+            setCode: setCode,
+            japaneseName: japaneseName,
+            type: type,
+            releaseDate: releaseDate,
+            rowid: rowid,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$SetsTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $SetsTable,
+    SetRow,
+    $$SetsTableFilterComposer,
+    $$SetsTableOrderingComposer,
+    $$SetsTableAnnotationComposer,
+    $$SetsTableCreateCompanionBuilder,
+    $$SetsTableUpdateCompanionBuilder,
+    (SetRow, BaseReferences<_$AppDatabase, $SetsTable, SetRow>),
+    SetRow,
+    PrefetchHooks Function()>;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -1707,4 +2137,5 @@ class $AppDatabaseManager {
       $$CardsTableTableManager(_db, _db.cards);
   $$UserCollectionsTableTableManager get userCollections =>
       $$UserCollectionsTableTableManager(_db, _db.userCollections);
+  $$SetsTableTableManager get sets => $$SetsTableTableManager(_db, _db.sets);
 }
