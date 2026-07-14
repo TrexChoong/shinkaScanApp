@@ -19,4 +19,4 @@ flutter run                   # Android/iOS/desktop (web not supported yet — s
 - `lib/models/` — `TCGCard`, `Booster`
 - `lib/screens/` — Cards, Boosters, Collection, OCR scan
 - `lib/services/` — OCR service (mobile / web / stub via conditional imports)
-- `DB/250615/` — scraped card data (`Results.csv`), seeded into SQLite on first run
+- `DB/<date>/` — local card data (`Results.csv`, not included — supply your own), seeded into SQLite on first run

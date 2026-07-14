@@ -125,7 +125,7 @@ Pressure valves, in order: **#90** (related-cards UI slice), **#1** (web support
 
 | Week | Dates | Focus | Work |
 |---|---|---|---|
-| W5 | Aug 3–7 | Pricing spike | **#6**: identify price sources, check ToS, prototype scrape for a few cards (e.g. AE-086) |
+| W5 | Aug 3–7 | Pricing spike | **#6**: identify price sources, prototype scrape for a few cards (e.g. AE-086) |
 | W6 | Aug 10–14 | Decision | **#6**: pick live-scrape vs daily-cron DB; update #7/#8/#16 with the outcome. **Gate opens for all M1 build work** |
 | W7 | Aug 17–21 | Build starts on three fronts | **#7** price schema fields (#36), **#8** price scraper job (#40), **#16** expansion detection (#45) |
 | W8 | Aug 24–28 | Pipeline takes shape | **#8**: cron schedule (#41), publish/distribution mechanism (#42 — the channel #16 reuses). **#7**: price on scan result (#37) |

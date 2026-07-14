@@ -58,3 +58,6 @@ shinka_scan_app/linux/flutter/generated_plugin_registrant.cc
 
 # Claude Code tooling config
 .claude/
+
+# Local-only notes (not distributed)
+*.local.md

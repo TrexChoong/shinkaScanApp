@@ -12,7 +12,7 @@ The long-term goal is to **promote trading by eliminating middlemen**: instead o
 ```
 
 - **OCR scanning** — Google ML Kit text recognition on mobile, with a web camera fallback via JS interop
-- **Card database** — a [drift](https://drift.simonbinder.eu/) (SQLite) database seeded from scraped card data (`DB/250615/Results.csv`), bundled as an app asset
+- **Card database** — a [drift](https://drift.simonbinder.eu/) (SQLite) database seeded from a local `DB/<date>/Results.csv`. **The CSV is not included in this repo**, so provide your own to seed the DB
 - **Collection tracking** — keep a record of the cards you own
 
 ## Project structure
@@ -25,7 +25,7 @@ shinka_scan_app/
 │   ├── screens/       # Cards, Boosters, Collection, OCR scan
 │   ├── services/      # OCR service (mobile / web / stub via conditional imports)
 │   └── ui/            # shared widgets
-├── DB/250615/         # scraped card data (Results.csv) seeded into SQLite
+├── DB/250615/         # db_init.sql schema (tracked); Results.csv seed data (local only, gitignored)
 └── test/
 ```
 
@@ -39,6 +39,8 @@ flutter pub get
 dart run build_runner build   # regenerate drift code after schema changes
 flutter run                   # pick an Android/iOS/desktop device
 ```
+
+> **Seed data:** the card database is seeded from `shinka_scan_app/DB/<date>/Results.csv`, which is **not** included in this repo. Provide your own before running, or the card DB will be empty.
 
 > **Note:** Flutter **web** cannot open the card database yet — it needs `sqlite3.wasm` and a compiled drift worker in `web/` ([#1](https://github.com/TrexChoong/shinkaScanApp/issues/1)). Run on mobile or desktop for now.
 

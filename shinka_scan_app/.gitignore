@@ -50,3 +50,8 @@ app.*.map.json
 /windows/flutter
 /linux/flutter
 /macos/flutter
+
+# Local-only: scraped data, scraper tooling, and local notes are not distributed.
+/DB/**/*.csv
+/DB/**/scripts/
+*.local.md
